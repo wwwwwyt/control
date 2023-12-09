@@ -139,6 +139,10 @@ void DBus::unpack()
   d_bus_data_.ch2 -= 1024;
   d_bus_data_.ch3 = (buff_[4] >> 1 | buff_[5] << 7) & 0x07FF;
   d_bus_data_.ch3 -= 1024;
+  if ((abs(d_bus_data_.ch0) == 1024)) d_bus_data_.ch0 =0;
+  if ((abs(d_bus_data_.ch1) == 1024)) d_bus_data_.ch1=0;
+  if ((abs(d_bus_data_.ch2) == 1024)) d_bus_data_.ch2=0;
+  if ((abs(d_bus_data_.ch3) == 1024)) d_bus_data_.ch3=0;
   /* prevent remote control zero deviation */
   if (d_bus_data_.ch0 <= 10 && d_bus_data_.ch0 >= -10)
     d_bus_data_.ch0 = 0;
@@ -149,8 +153,8 @@ void DBus::unpack()
   if (d_bus_data_.ch3 <= 10 && d_bus_data_.ch3 >= -10)
     d_bus_data_.ch3 = 0;
 
-  d_bus_data_.s0 = ((buff_[5] >> 4) & 0x0003);
-  d_bus_data_.s1 = ((buff_[5] >> 4) & 0x000C) >> 2;
+  d_bus_data_.s0 = ((buff_[5] >> 4) & 0x0003);//right
+  d_bus_data_.s1 = ((buff_[5] >> 4) & 0x000C) >> 2;//left
 
   if ((abs(d_bus_data_.ch0) > 660) || (abs(d_bus_data_.ch1) > 660) || (abs(d_bus_data_.ch2) > 660) ||
       (abs(d_bus_data_.ch3) > 660))

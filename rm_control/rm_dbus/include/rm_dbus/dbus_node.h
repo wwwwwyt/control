@@ -49,6 +49,7 @@ private:
   ros::Publisher cmd_vel_pub_; 
   std::string serial_port_;
   rm_msgs::DbusData dbus_cmd_;
+  geometry_msgs::Twist cmd_vel_;
   DBus dbus_{};
 
 public:

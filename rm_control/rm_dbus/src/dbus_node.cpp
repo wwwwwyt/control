@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 
 DBusNode::DBusNode()
 {
-  dbus_pub_ = nh_.advertise<rm_msgs::DbusData>("dbus_data", 1);
+  dbus_pub_ = nh_.advertise<rm_msgs::DbusData>("dbus_data", 1000);
   cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel",10);
   nh_.param<std::string>("serial_port", serial_port_, "/dev/usbDbus");
   // nh_.param<std::string>("")
@@ -66,18 +66,15 @@ void DBusNode::run()
   dbus_pub_.publish(dbus_cmd_);
   if(dbus_cmd_.s_l == 3 && dbus_cmd_.s_r == 3)
     {
-      geometry_msgs::Twist cmd_vel_;
-      cmd_vel_.linear.x = dbus_cmd_.ch_r_x;
-      cmd_vel_.linear.y = dbus_cmd_.ch_r_y;
-      cmd_vel_.angular.z = dbus_cmd_.ch_l_x;
-      cmd_vel_pub_.publish(cmd_vel_);
+      cmd_vel_.linear.x = dbus_cmd_.ch_r_y;
+      cmd_vel_.linear.y = dbus_cmd_.ch_r_x;
+      cmd_vel_.angular.z = dbus_cmd_.ch_l_y;
     }
-  else if(dbus_cmd_.s_l == 3 && dbus_cmd_.s_r == 3)
+    else
     {
-      geometry_msgs::Twist cmd_vel_;
       cmd_vel_.linear.x = 0;
       cmd_vel_.linear.y = 0;
-      cmd_vel_.angular.z = 0;
-      cmd_vel_pub_.publish(cmd_vel_);
-    }      
+      cmd_vel_.angular.z = 0; 
+    }
+  cmd_vel_pub_.publish(cmd_vel_);
 }
