@@ -4,6 +4,9 @@ project(rm_hw)
 ## Use C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+SET(CMAKE_BUILD_TYPE "Debug")
+#SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+#SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 # Optimize
 # set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -79,6 +82,7 @@ add_executable(${PROJECT_NAME}
         src/hardware_interface/socketcan.cpp
         src/hardware_interface/can_bus.cpp
         src/hardware_interface/gpio_manager.cpp
+        src/hardware_interface/sockettcp.cpp
         src/control_loop.cpp
         )
 
