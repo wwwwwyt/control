@@ -38,6 +38,7 @@
 #pragma once
 
 #include "rm_hw/hardware_interface/socketcan.h"
+#include "rm_hw/hardware_interface/sockettcp.h"
 #include "rm_hw/hardware_interface/types.h"
 
 #include <chrono>
@@ -85,6 +86,7 @@ private:
   void frameCallback(const can_frame& frame);
 
   can::SocketCAN socket_can_;
+  can::SocketTcp socket_tcp_;
   CanDataPtr data_ptr_;
   std::vector<CanFrameStamp> read_buffer_;
 
