@@ -57,22 +57,29 @@ SocketTcp::~SocketTcp()
 bool SocketTcp::open(const std::string& interface, boost::function<void(const can_frame& frame)> handler,
                      int thread_priority)
 {
-    memset(&remote_addr,0,sizeof(remote_addr)); //数据初始化--清零
-    remote_addr.sin_family=AF_INET; //设置为IP通信
-    remote_addr.sin_addr.s_addr=inet_addr("192.168.4.101"); //服务器IP地址
-    remote_addr.sin_port=htons(8881); //服务器端口号
-
-    //创建客户端套接字--IPv4协议，面向连接通信，TCP协议
+          //创建客户端套接字--IPv4协议，面向连接通信，TCP协议
     if((sock_fd_ = socket(PF_INET,SOCK_STREAM,0))<0){
         std::cout<<"Error: Unable to create a TCP socket"<<std::endl;
         return false;
     }
-    //将套接字绑定到服务器的网络地址上reinterpret_cast<struct sockaddr*>(&address_)
-    if(connect(sock_fd_,reinterpret_cast<struct sockaddr*>(&remote_addr),sizeof(struct sockaddr_in)) < 0){
+    memset(&remote_addr,0,sizeof(remote_addr)); //数据初始化--清零
+    remote_addr.sin_family=AF_INET; //设置为IP通信
+    remote_addr.sin_addr.s_addr=inet_addr("192.168.4.101"); //服务器IP地址
+  if(interface == "can0")
+  {
+
+    remote_addr.sin_port=htons(8881); //服务器端口号
+  }
+  if(interface == "can1")
+  {
+
+    remote_addr.sin_port=htons(8882); //服务器端口号
+  }   
+  //将套接字绑定到服务器的网络地址上reinterpret_cast<struct sockaddr*>(&address_)
+  if(connect(sock_fd_,reinterpret_cast<struct sockaddr*>(&remote_addr),sizeof(struct sockaddr_in)) < 0){
         std::cout<<"TCP connect error"<<std::endl;
         return false;
     }
-    
   reception_handler = std::move(handler);
   return startReceiverThread(thread_priority);
 }
@@ -97,15 +104,36 @@ bool SocketTcp::isOpen() const
 
 void SocketTcp::write(can_frame* frame) const
 {
+  char send_buf[13];
   if (!isOpen())
   {
     ROS_ERROR_THROTTLE(5., "Unable to write: Socket %s not open", interface_request_.ifr_name);
     return;
   }
-  if (::write(sock_fd_, frame, sizeof(can_frame)) == -1)
+
     //can帧转tcp 
   
+  send_buf[0] = 8;
+  send_buf[1] = 0;
+  send_buf[2] = 0;
+  send_buf[3] = frame->can_id >> 8;
+
+  for(int i=0;i<8;i++)
+  {
+    send_buf[i+5] = frame->data[i]; 
+  }
+  if(frame->can_id == 0x200)
+    {
+      send_buf[4] = 0;
+      if (::send(sock_fd, send_buf, sizeof(send_buf), 0) == -1)  
     ROS_DEBUG_THROTTLE(5., "Unable to write: The %s tx buffer may be full", interface_request_.ifr_name);
+    }
+  if(frame->can_id == 0x1FF)
+    {
+    send_buf[4] = 255 ;
+    if (::send(sock_fd_, send_buf, sizeof(send_buf), 0) == -1)  
+    ROS_DEBUG_THROTTLE(5., "Unable to write: The %s tx buffer may be full", interface_request_.ifr_name);
+    }
 }
 
 static void* socketcan_receiver_thread(void* argv)
@@ -123,7 +151,7 @@ static void* socketcan_receiver_thread(void* argv)
   struct timeval timeout
   {
   };
-  char tcp_buffer[13];
+  char tcp_recive_buffer[13];
   can_frame rx_frame{};
 
 
@@ -140,15 +168,15 @@ static void* socketcan_receiver_thread(void* argv)
 
     if (select(maxfd + 1, &descriptors, nullptr, nullptr, &timeout))
     {
-      size_t len = recv(sock->sock_fd_, (void*)&tcp_buffer, 13 , 0);
+      size_t len = recv(sock->sock_fd_, (void*)&tcp_recive_buffer, 13 , 0);
       if (len < 0)
         continue;
       if (sock->reception_handler != nullptr)
        {
-        rx_frame.can_id =  (tcp_buffer[4] | tcp_buffer[3]<<8);
-        // rx_frame.can_dlc = tcp_buffer[5];
+        rx_frame.can_id =  (tcp_recive_buffer[4] | tcp_recive_buffer[3]<<8);
+        rx_frame.can_dlc = tcp_recive_buffer[0];
 
-        memcpy(rx_frame.data, tcp_buffer + 5, 8);
+        memcpy(rx_frame.data, tcp_recive_buffer + 5, 8);
         sock->reception_handler(rx_frame);
        } 
     }

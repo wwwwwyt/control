@@ -45,9 +45,12 @@ CanBus::CanBus(const std::string& bus_name, CanDataPtr data_ptr, int thread_prio
   : bus_name_(bus_name), data_ptr_(data_ptr)
 {
   // Initialize device at can_device, false for no loop back.
-  while (!socket_tcp_.open(bus_name, boost::bind(&CanBus::frameCallback, this, _1), thread_priority) && ros::ok())
-    ros::Duration(.5).sleep();
 
+  socket_tcp_can1.open(bus_name, boost::bind(&CanBus::frameCallback, this, _1), thread_priority) && ros::ok();
+    ros::Duration(.5).sleep();   
+     
+  socket_tcp_can0.open(bus_name, boost::bind(&CanBus::frameCallback, this, _1), thread_priority) && ros::ok();
+    ros::Duration(.5).sleep();
   ROS_INFO("Successfully connected to %s.", bus_name.c_str());
   // Set up CAN package header
   rm_frame0_.can_id = 0x200;
@@ -111,9 +114,15 @@ void CanBus::write()
   }
 
   if (has_write_frame0)
-    socket_can_.write(&rm_frame0_);
+    {
+      // socket_can_.write(&rm_frame0_);
+      socket_tcp_can0.write(&rm_frame0_);
+    }
   if (has_write_frame1)
-    socket_can_.write(&rm_frame1_);
+    {
+      // socket_can_.write(&rm_frame1_);
+      socket_tcp_can1.write(&rm_frame1_);
+    }
 }
 
 void CanBus::read(ros::Time time)
@@ -264,7 +273,9 @@ void CanBus::read(ros::Time time)
 
 void CanBus::write(can_frame* frame)
 {
-  socket_can_.write(frame);
+  // socket_can_.write(frame);
+  socket_tcp_can0.write(frame);
+  socket_tcp_can1.write(frame);
 }
 
 void CanBus::frameCallback(const can_frame& frame)

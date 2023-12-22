@@ -86,7 +86,8 @@ private:
   void frameCallback(const can_frame& frame);
 
   can::SocketCAN socket_can_;
-  can::SocketTcp socket_tcp_;
+  can::SocketTcp socket_tcp_can0;
+  can::SocketTcp socket_tcp_can1;
   CanDataPtr data_ptr_;
   std::vector<CanFrameStamp> read_buffer_;
 
