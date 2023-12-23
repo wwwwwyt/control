@@ -16,3 +16,4 @@ rosrun rm_dbus rm_dbus #遥控器
 ``` 
 ## 流程
 ![](https://github.com/guodongxiaren/ImageCache/raw/master/Logo/foryou.gif) 
+![](https://github.com/wwwwwyt/control/blob/main/picture/process.jpg) 
