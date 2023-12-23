@@ -177,7 +177,7 @@ void CanBus::read(ros::Time time)
         act_data.effort = act_coeff.act2effort * static_cast<double>(cur);
         // Low pass filter
         act_data.lp_filter->input(act_data.vel, frame_stamp.stamp);
-        act_data.vel = act_data.lp_filter->output();
+        // act_data.vel = act_data.lp_filter->output();
         continue;
       }
     }
