@@ -5,6 +5,7 @@ hjj jy hzj对此项目亦有贡献
 ros1下正常控制整车（应该）
 ## todolist
 - [ ] 轮子极性
+- [ ] 实时性test
 - [ ] 裁判系统test
 - [ ] ros2 && ubuntu22实时内核
 ## 食用
