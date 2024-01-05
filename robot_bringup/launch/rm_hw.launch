@@ -1,0 +1,45 @@
+<launch>
+    <arg name="robot_type" default="hero"/>
+    <arg name="debug" default="false"/>
+    <arg name="load_chassis" default="true"/>
+    <arg name="load_gimbal" default="false"/>
+    <arg name="load_shooter" default="false"/>
+    <arg name="load_arm" default="true"/>
+
+    <arg unless="$(arg debug)" name="launch_prefix" value="true"/>
+    <arg if="$(arg debug)" name="launch_prefix" value="gdbserver :1234"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro $(find rm_description)/urdf/standard4/standard4.urdf.xacro
+         load_chassis:=$(arg load_chassis) load_gimbal:=$(arg load_gimbal) load_shooter:=$(arg load_shooter)
+         load_arm:=$(arg load_arm)
+         use_simulation:=false roller_type:=none
+"/>
+
+    <rosparam file="$(find rm_hw)/config/actuator_coefficient.yaml" command="load" ns="rm_hw"/>
+    <rosparam file="$(find rm_hw)/config/hero.yaml" command="load"/>
+
+    <node name="rm_hw"  pkg="rm_hw" type="rm_hw" respawn="false"
+          clear_params="true"/>
+
+    <rosparam file="$(find robot_state_controller)/test/config.yaml" command="load"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+          args="load controllers/robot_state_controller controllers/joint_state_controller"/> 
+
+
+
+    <arg name="chassis_type" default="swerve"/>
+    <arg name="ekf" default="false"/>
+    <arg name="odom_tf" default="true"/>
+
+    <rosparam file="$(find rm_chassis_controllers)/test/$(arg chassis_type).yaml" command="load"/>
+    <rosparam if="$(arg ekf)" param="controllers/chassis_controller/enable_odom_tf">false</rosparam>
+
+    <node name="controller_loader" pkg="controller_manager" type="spawner" output="screen"
+          args="load controllers/chassis_controller"/>
+    <node if="$(arg ekf)" pkg="robot_localization" type="ekf_localization_node" name="ekf_localization"
+          clear_params="true">
+        <rosparam command="load" file="$(find rm_chassis_controllers)/config/localization.yaml"/>
+    </node>
+    <node if="$(arg odom_tf)" pkg="tf2_ros" type="static_transform_publisher" name="odom_tf_publisher"
+          args="0 0 0 0 0 0 1 map odom"/>        
+</launch>

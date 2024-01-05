@@ -111,6 +111,28 @@ void CanBus::write()
       frame.data[7] = tau & 0xff;
       socket_can_.write(&frame);
     }
+    else if (item.second.type.find("bulute") != std::string::npos)
+    {
+      can_frame frame{};
+      const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
+      frame.can_id = item.first;
+      frame.can_dlc = 8;
+      uint16_t q_des = static_cast<int>(act_coeff.pos2act * (item.second.cmd_pos - act_coeff.act2pos_offset));
+      uint16_t qd_des = static_cast<int>(act_coeff.vel2act * (item.second.cmd_vel - act_coeff.act2vel_offset));
+      uint16_t kp = 0.;
+      uint16_t kd = 0.;
+      uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset));
+      // TODO(qiayuan) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
+      frame.data[0] = q_des >> 8;
+      frame.data[1] = q_des & 0xFF;
+      frame.data[2] = qd_des >> 4;
+      frame.data[3] = ((qd_des & 0xF) << 4) | (kp >> 8);
+      frame.data[4] = kp & 0xFF;
+      frame.data[5] = kd >> 4;
+      frame.data[6] = ((kd & 0xF) << 4) | (tau >> 8);
+      frame.data[7] = tau & 0xff;
+      socket_can_.write(&frame);
+    }
   }
 
   if (has_write_frame0)
@@ -223,6 +245,40 @@ void CanBus::read(ros::Time time)
           act_data.vel = act_data.lp_filter->output();
           continue;
         }
+      }
+    }
+    else if(frame.can_id == 0x01) //布瑞特电调
+    {
+      if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
+      {
+        ActData& act_data = data_ptr_.id2act_data_->find(frame.data[0])->second;
+        // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
+        if (act_data.type.find("BrtEncoder") != std::string::npos)
+        {  // BrtEncoder
+          ActData& act_data = data_ptr_.id2act_data_->find(frame.data[0])->second;
+          // if(can_rx_data[0] != 0x07 || can_rx_data[1] != ID){return;}
+	        act_data.pos = (uint32_t)(frame.data[5]<<16 | frame.data[4]<<8 |	frame.data[3]);
+          act_data.lp_filter->input(act_data.vel);
+          // act_data.vel = act_data.lp_filter->output();
+          continue;
+        }
+      }
+    }
+    else if((CAN_PACKET_ID)frame.can_id>>8  == CAN_PACKET_STATUS)
+    {
+      if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
+      {
+      ActData& act_data = data_ptr_.id2act_data_->find(frame.data[0])->second;
+      // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
+      // if(can_rx_data[0] != 0x07 || can_rx_data[1] != ID){return;}
+	    // act_data.pos = (uint32_t)(frame.data[5]<<16 | frame.data[4]<<8 |	frame.data[3]);
+      act_data.vel = ((uint32_t) frame.data[0]) << 24 |
+					((uint32_t) frame.data[1]) << 16 |
+					((uint32_t) frame.data[2]) << 8 |
+					((uint32_t) frame.data[3]);
+      act_data.lp_filter->input(act_data.vel);
+      // act_data.vel = act_data.lp_filter->output();
+      continue;
       }
     }
     else if (data_ptr_.id2imu_data_->find(frame.can_id) != data_ptr_.id2imu_data_->end())  // Check if IMU gyro

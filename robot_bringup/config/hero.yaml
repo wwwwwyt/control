@@ -1,7 +1,7 @@
 rm_hw:
   bus:
     - can0
-    - can1
+    # - can1
     # - eno1
     # - 192.168.4.102
   loop_frequency: 1000
@@ -11,7 +11,7 @@ rm_hw:
   actuators:
     left_back_wheel_motor:
       bus: can0
-      id: 0x204
+      id: 0x202
       type: rm_3508
       lp_cutoff_frequency: 150
     left_front_wheel_motor:
@@ -21,32 +21,32 @@ rm_hw:
       lp_cutoff_frequency: 150  
     right_front_wheel_motor:
       bus: can0
-      id: 0x202
+      id: 0x203
       type: rm_3508
       lp_cutoff_frequency: 150
     right_back_wheel_motor:
       bus: can0
-      id: 0x203
+      id: 0x204
       type: rm_3508
       lp_cutoff_frequency: 150
 
     left_back_pivot_motor:
-      bus: can1
+      bus: can0
       id: 0x206
       type: rm_6020
       lp_cutoff_frequency: 150
     left_front_pivot_motor:
-      bus: can1
+      bus: can0
       id: 0x205
       type: rm_6020
       lp_cutoff_frequency: 150  
     right_front_pivot_motor:
-      bus: can1
+      bus: can0
       id: 0x208
       type: rm_6020
       lp_cutoff_frequency: 150
     right_back_pivot_motor:
-      bus: can1
+      bus: can0
       id: 0x207
       type: rm_6020
       lp_cutoff_frequency: 150
