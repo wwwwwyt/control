@@ -1,0 +1,97 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="max_effort" value="12"/>
+    <xacro:property name="max_velocity" value="20.9333"/>
+    <xacro:property name="leg_upper_limit" value="1.728"/>
+    <xacro:property name="leg_lower_limit" value="0.05"/>
+
+    <xacro:macro name="first_leg"
+                params="reflex prefix connected_to pitch_offset leg_x_offset leg_y_offset leg_z_offset mechanical_reduction">
+        <link name="${prefix}_first_leg">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://rm_description/meshes/legged_balance/first_leg.stl"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.01 0.01 0.01"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.144"/>
+                <origin xyz="-0.0 -0.0 -0.064"/>
+                <inertia ixx="4.261e-4" ixy="0" ixz="2.897e-6" iyy="4.502e-4" iyz="0"
+                        izz="2.9292e-5"/>
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_first_leg_joint" type="revolute">
+            <axis xyz="0 1 0"/>
+            <origin xyz="${leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0 ${pitch_offset} 0"/>
+            <parent link="${connected_to}"/>
+            <child link="${prefix}_first_leg"/>
+            <xacro:if value="${reflex == 1}">
+                <limit effort="${max_effort}" velocity="${max_velocity}" lower="${leg_lower_limit}"
+                    upper="${leg_upper_limit}"/>
+                <safety_controller k_position="100" k_velocity="1"
+                                soft_lower_limit="${leg_lower_limit}"
+                                soft_upper_limit="${leg_upper_limit}"/>
+            </xacro:if>
+            <xacro:if value="${reflex == -1}">
+                <limit effort="${max_effort}" velocity="${max_velocity}" lower="${-leg_upper_limit}"
+                    upper="${-leg_lower_limit}"/>
+                <safety_controller k_position="100" k_velocity="1"
+                                soft_lower_limit="${-leg_upper_limit}"
+                                soft_upper_limit="${-leg_lower_limit}"/>
+            </xacro:if>
+        </joint>
+
+        <transmission name="${prefix}_leg_joint_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <actuator name="${prefix}_leg_joint_motor">
+                <mechanicalReduction>${mechanical_reduction}</mechanicalReduction>
+            </actuator>
+            <joint name="${prefix}_first_leg_joint">
+                <offset>0.</offset>
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            </joint>
+        </transmission>
+
+    </xacro:macro>
+
+    <xacro:macro name="second_leg"
+                params="prefix connected_to pitch_offset leg_x_offset leg_y_offset leg_z_offset">
+        <link name="${prefix}_second_leg">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://rm_description/meshes/legged_balance/second_leg.stl"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.01 0.01 0.01"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.451"/>
+                <origin xyz="0.0 -0.007386 -0.177365"/>
+                <inertia ixx="4.251e-3" ixy="2.83e-7" ixz="5.237e-6" iyy="4.279e-3" iyz="-2.428e-4"
+                        izz="2.143e-4"/>
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_second_leg_joint" type="continuous">
+            <axis xyz="0 1 0"/>
+            <origin xyz="${leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0 ${pitch_offset} 0"/>
+            <parent link="${connected_to}"/>
+            <child link="${prefix}_second_leg"/>
+            <dynamics damping="0.0" friction="0.001"/>
+        </joint>
+
+
+    </xacro:macro>
+</robot>
