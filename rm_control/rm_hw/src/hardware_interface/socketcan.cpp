@@ -112,7 +112,7 @@ void SocketCAN::write(can_frame* frame) const
 {
   if (!isOpen())
   {
-    ROS_ERROR_THROTTLE(5., "Unable to write: Socket %s not open", interface_request_.ifr_name);
+    ROS_ERROR_THROTTLE(5., "soc can Unable to write: Socket %s not open", interface_request_.ifr_name);
     return;
   }
   if (::write(sock_fd_, frame, sizeof(can_frame)) == -1)
