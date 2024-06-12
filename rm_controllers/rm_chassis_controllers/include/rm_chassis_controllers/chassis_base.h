@@ -177,6 +177,70 @@ protected:
   Command cmd_struct_;
   realtime_tools::RealtimeBuffer<Command> cmd_rt_buffer_;
   realtime_tools::RealtimeBuffer<nav_msgs::Odometry> odom_buffer_;
+
+  typedef struct 
+  {
+    uint16_t id;
+    uint16_t state;
+    int p_int;
+    int v_int;
+    int t_int;
+    int kp_int;
+    int kd_int;
+    float pos;
+    float vel;
+    float tor;
+    float Kp;
+    float Kd;
+    float Tmos;
+    float Tcoil;
+  }motor_fbpara_t;
+
+  typedef struct
+  {
+    uint16_t mode;
+    motor_fbpara_t para;
+  }Joint_Motor_t ;
+
+  typedef struct
+  {
+    uint16_t mode;
+    float wheel_T;//轮毂电机的输出扭矩，单位为N
+    
+    motor_fbpara_t para;	
+  }Wheel_Motor_t ;
+  typedef struct
+  {
+    Joint_Motor_t joint_motor[4];
+    Wheel_Motor_t wheel_motor[2];
+    
+    float v_set;//期望速度，单位是m/s
+    float x_set;//期望位置，单位是m
+    float turn_set;//期望yaw轴弧度
+    float leg_set;//期望腿长，单位是m
+    float last_leg_set;
+
+    float v_filter;//滤波后的车体速度，单位是m/s
+    float x_filter;//滤波后的车体位置，单位是m
+    
+    float myPithR;
+    float myPithGyroR;
+    float myPithL;
+    float myPithGyroL;
+    float roll;
+    float total_yaw;
+    float theta_err;//两腿夹角误差
+      
+    float turn_T;//yaw轴补偿
+    float leg_tp;//防劈叉补偿
+    
+    uint8_t start_flag;//启动标志
+    
+    uint8_t recover_flag;//一种情况下的倒地自起标志
+
+    
+  } chassis_t;
+
 };
 
 }  // namespace rm_chassis_controllers

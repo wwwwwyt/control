@@ -44,6 +44,8 @@
 #include <string>
 #include "math_utilities.h"
 
+#include "ori_tool.h"
+
 #define pi 3.1415926f
 #define LEG_PID_KP  350.0f
 #define LEG_PID_KI  0.0f

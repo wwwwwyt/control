@@ -53,3 +53,36 @@ tf2::Quaternion getAverageQuaternion(const std::vector<tf2::Quaternion>& quatern
                                      const std::vector<double>& weights);
 
 tf2::Quaternion rotationMatrixToQuaternion(const Eigen::Map<Eigen::Matrix3d>& rot);
+
+    typedef struct
+  {
+      float q[4]; // 四元数估计值
+
+      float Gyro[3];  // 角速度
+      float Accel[3]; // 加速度
+      float MotionAccel_b[3]; // 机体坐标加速度
+      float MotionAccel_n[3]; // 绝对系加速度
+
+      float AccelLPF; // 加速度低通滤波系数
+
+      // 加速度在绝对系的向量表示
+      float xn[3];
+      float yn[3];
+      float zn[3];
+
+      float atanxz;
+      float atanyz;
+
+      // 位姿
+      double Roll;
+      double Pitch;
+      double Yaw;
+      float YawTotalAngle;
+      float YawAngleLast;
+      float YawRoundCount;
+      
+      float v_n;//绝对系沿着水平运动方向的速度
+      float x_n;//绝对系沿着水平运动方向的位移
+      
+      uint8_t ins_flag;
+  } INS_t;
