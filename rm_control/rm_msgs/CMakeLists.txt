@@ -7,18 +7,21 @@ find_package(catkin REQUIRED COMPONENTS
         geometry_msgs
         actionlib
         actionlib_msgs
-        )
+)
 
 add_message_files(
         FILES
         ActuatorState.msg
         BalanceState.msg
         DbusData.msg
+        ExchangerMsg.msg
         ChassisCmd.msg
         ShootCmd.msg
         ShootState.msg
+        ShootBeforehandCmd.msg
         GimbalCmd.msg
         GimbalDesError.msg
+        GimbalPosState.msg
         LpData.msg
         KalmanData.msg
         MovingAverageData.msg
@@ -43,6 +46,7 @@ add_service_files(
 add_message_files(
         DIRECTORY msg/detection
         FILES
+        PriorityArray.msg
         TargetDetection.msg
         TargetDetectionArray.msg
         TrackData.msg
@@ -76,6 +80,10 @@ add_message_files(
         ClientMapSendData.msg
         ClientMapReceiveData.msg
         MapSentryData.msg
+        GameRobotPosData.msg
+        SentryInfo.msg
+        RadarInfo.msg
+        Buff.msg
         PowerManagementSampleAndStatusData.msg
         PowerManagementInitializationExceptionData.msg
         PowerManagementProcessStackOverflowData.msg
