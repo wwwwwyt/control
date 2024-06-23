@@ -88,8 +88,8 @@ void CanBus::write()
         socket_tcp_can1.write(&rm_frame1_);
       }
     }
-    else if (item.second.type.find("cheetah") != std::string::npos)
-    {
+    // else if (item.second.type.find("cheetah") != std::string::npos)
+    // {
       // can_frame frame{};
       // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
       // frame.can_id = item.first;
@@ -109,8 +109,51 @@ void CanBus::write()
       // frame.data[6] = ((kd & 0xF) << 4) | (tau >> 8);
       // frame.data[7] = tau & 0xff;
       // socket_can_.write(&frame);
-    }
+    // }
     else if (item.second.type.find("dm") != std::string::npos)
+    {
+      // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
+      rm_frame0_.can_id = item.first + 0x04;
+
+      uint16_t pos_tmp,vel_tmp,kp_tmp{0},kd_tmp{0},tor_tmp;     
+      pos_tmp = CanBus::float_to_uint(item.second.cmd_pos,  P_MIN_8009,  P_MAX_8009,  16);
+      vel_tmp = CanBus::float_to_uint(item.second.cmd_vel,  V_MIN_8009,  V_MAX_8009,  12);
+      // kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12); //结构体无控制pid数据 且这里不控制pid 所以直接给0
+      // kd_tmp  = float_to_uint(kd,   KD_MIN, KD_MAX, 12);
+      tor_tmp = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  12);
+
+      // TODO(wyt) add position vel and effort hardware interface for DM Motor, now we using it as an effort joint.
+      rm_frame0_.data[0] = pos_tmp >> 8;
+      rm_frame0_.data[1] = pos_tmp;
+      rm_frame0_.data[2] = vel_tmp >> 4;
+      rm_frame0_.data[3] = ((vel_tmp & 0xF) << 4) | (kp_tmp >> 8);
+      rm_frame0_.data[4] = kp_tmp ;
+      rm_frame0_.data[5] = kd_tmp >> 4;
+      rm_frame0_.data[6] = ((kd_tmp & 0xF) << 4) | (tor_tmp >> 8);
+      rm_frame0_.data[7] = tor_tmp ;
+
+      rm_frame0_.data[0] = 0xFF;//使能帧
+      rm_frame0_.data[1] = 0xFF;
+      rm_frame0_.data[2] = 0xFF;
+      rm_frame0_.data[3] = 0xFF;
+      rm_frame0_.data[4] = 0xFF;
+      rm_frame0_.data[5] = 0xFF;
+      rm_frame0_.data[6] = 0xFF;
+      rm_frame0_.data[7] = 0xFC;      
+
+      // rm_frame0_.data[0] = 0xFF;//保存零点 （ 在机械拆装腿时 摆到上限位处理零点 vmc拿机械数据－电机角度
+      // rm_frame0_.data[1] = 0xFF;
+      // rm_frame0_.data[2] = 0xFF;
+      // rm_frame0_.data[3] = 0xFF;
+      // rm_frame0_.data[4] = 0xFF;
+      // rm_frame0_.data[5] = 0xFF;
+      // rm_frame0_.data[6] = 0xFF;
+      // rm_frame0_.data[7] = 0xFE;    
+      
+      socket_tcp_can0.write(&rm_frame0_);
+      // std::cout<<"write success !!!"<<std::endl;
+    }    
+    else if (item.second.type.find("lk") != std::string::npos)
     {
       const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
       rm_frame0_.can_id = item.first + 0x04;
@@ -129,14 +172,14 @@ void CanBus::write()
       rm_frame0_.data[6] = ((kd & 0xF) << 4) | (tau >> 8);
       rm_frame0_.data[7] = tau ;
 
-	rm_frame0_.data[0] = 0xFF;
-	rm_frame0_.data[1] = 0xFF;
-	rm_frame0_.data[2] = 0xFF;
-	rm_frame0_.data[3] = 0xFF;
-	rm_frame0_.data[4] = 0xFF;
-	rm_frame0_.data[5] = 0xFF;
-	rm_frame0_.data[6] = 0xFF;
-	rm_frame0_.data[7] = 0xFC;      
+	// rm_frame0_.data[0] = 0xFF;
+	// rm_frame0_.data[1] = 0xFF;r
+	// rm_frame0_.data[2] = 0xFF;
+	// rm_frame0_.data[3] = 0xFF;
+	// rm_frame0_.data[4] = 0xFF;
+	// rm_frame0_.data[5] = 0xFF;
+	// rm_frame0_.data[6] = 0xFF;
+	// rm_frame0_.data[7] = 0xFC;      
 
   socket_tcp_can0.write(&rm_frame0_);
       // std::cout<<"write success !!!"<<std::endl;
@@ -283,9 +326,75 @@ void CanBus::read(ros::Time time)
       // if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
       // {
         ActData& act_data = data_ptr_.id2act_data_->find(frame.can_id)->second;
-        const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
+        // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
         if (act_data.type.find("dm") != std::string::npos)
         {  
+          // motor->para.id = (rx_data[0])&0x0F;
+          // motor->para.state = (rx_data[0])>>4;
+          act_data.state = (frame.data[0])>>4;
+          act_data.q_raw = (frame.data[1]<<8)|frame.data[2];
+          act_data.qd_raw = (frame.data[3]<<4)|(frame.data[4]>>4);
+          act_data.t_int = ((frame.data[4]&0xF)<<8)|frame.data[5];
+          act_data.pos = CanBus::uint_to_float(act_data.q_raw, P_MIN_8009, P_MAX_8009, 16);
+          act_data.vel = CanBus::uint_to_float(act_data.qd_raw, V_MIN_8009, V_MAX_8009, 12);
+          act_data.effort = CanBus::uint_to_float(act_data.t_int, T_MIN_8009, T_MAX_8009, 12);
+          // motor->para.Tmos = (float)(rx_data[6]);
+          // motor->para.Tcoil = (float)(rx_data[7]);
+
+          // uint16_t id：这是一个无符号16位整数，用于存储电机的ID或者索引，以便于识别不同的电机。
+          // uint16_t state：这同样是一个无符号16位整数，用于表示电机的状态。它可能包含了电机的运行状态、故障代码等信息。
+          // int p_int、int v_int、int t_int：这些是有符号整数，分别代表电机的位置、速度和力矩（或扭矩）的整数值。这些值可能是从电机反馈中直接读取的原始数据。
+          // int kp_int、int kd_int：这些是有符号整数，代表PID控制器中的比例增益（Kp）和微分增益（Kd）的整数值。这些值用于控制算法中，以调整电机的性能。
+          // float pos、float vel、float tor：这些是浮点数，分别代表电机的位置、速度和力矩的浮点数值。这些值可能是经过转换和计算后的实际物理量。
+          // float Kp、float Kd：这些是浮点数，代表PID控制器中的比例增益和微分增益。与kp_int和kd_int类似，但这些是浮点数版本，用于更精确的控制。
+          // float Tmos、float Tcoil：这两个浮点数可能是与电机温度相关的参数，Tmos可能代表MOSFET（金属氧化物半导体场效应晶体管）的温度，而Tcoil可能代表电机的线圈温度。这些参数用于监测电机的热状态，防止过热。
+        try
+        {  // Duration will be out of dual 32-bit range while motor failure
+          act_data.frequency = 1. / (frame_stamp.stamp - act_data.stamp).toSec();
+        }
+        catch (std::runtime_error& ex)
+        {
+        }
+          continue;
+        }
+      // }
+    }
+    else if (data_ptr_.id2act_data_->find(frame.can_id) != data_ptr_.id2act_data_->end())
+    {
+      // if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
+      // {
+        ActData& act_data = data_ptr_.id2act_data_->find(frame.can_id)->second;
+        const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
+        if (act_data.type.find("lk") != std::string::npos)
+        {  
+        // measure->feed_dt = DWT_GetDeltaT(&measure->feed_dwt_cnt);
+
+        act_data.q_last = act_data.pos;
+        // measure->ecd = (uint16_t)((rx_buff[7] << 8) | rx_buff[6]);
+        act_data.pos = (uint16_t)((frame.data[7] << 8) | frame.data[6]);
+        // measure->angle_single_round = ECD_ANGLE_COEF_LK * measure->ecd;
+        act_data.angle_single_round = ECD_ANGLE_COEF_LK * act_data.pos;
+        // measure->speed_rads = (1 - SPEED_SMOOTH_COEF) * measure->speed_rads +
+        //                       DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(rx_buff[5] << 8 | rx_buff[4]));
+        act_data.vel = (1 - SPEED_SMOOTH_COEF) * act_data.vel +
+                              DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));
+        // measure->real_current = (1 - CURRENT_SMOOTH_COEF) * measure->real_current +
+        //                         CURRENT_SMOOTH_COEF * (float)((int16_t)(rx_buff[3] << 8 | rx_buff[2]));
+        act_data.effort = (1 - CURRENT_SMOOTH_COEF) * act_data.effort +
+                                CURRENT_SMOOTH_COEF * (float)((int16_t)(frame.data[3] << 8 | frame.data[2]));
+        // measure->temperature = rx_buff[1];
+        act_data.temp = frame.data[1];
+
+        // if (measure->ecd - measure->last_ecd > 32768)
+        //     measure->total_round--;
+        // else if (measure->ecd - measure->last_ecd < -32768)
+        //     measure->total_round++;
+        if (act_data.pos - act_data.q_last > 32768)
+            act_data.q_circle--;
+        else if (act_data.pos - act_data.q_last< -32768)
+            act_data.q_circle++; 
+        // measure->total_angle = measure->total_round * 360 + measure->angle_single_round;
+
           act_data.q_raw = (frame.data[1] << 8) | frame.data[2];
           uint16_t qd = (frame.data[3] << 4) | (frame.data[4] >> 4);
           uint16_t cur = ((frame.data[4] & 0xF) << 8) | frame.data[5];
@@ -320,7 +429,7 @@ void CanBus::read(ros::Time time)
           continue;
         }
       // }
-    }    
+    }         
     else if((CAN_PACKET_ID)frame.can_id>>8  == CAN_PACKET_STATUS)
     {
       if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
@@ -398,4 +507,19 @@ void CanBus::frameCallback(const can_frame& frame)
   read_buffer_.push_back(can_frame_stamp);
 }
 
+float CanBus::uint_to_float(int x_int, float x_min, float x_max, int bits)
+{
+	/* converts unsigned int to float, given range and number of bits */
+	float span = x_max - x_min;
+	float offset = x_min;
+	return ((float)x_int)*span/((float)((1<<bits)-1)) + offset;
+}
+
+int CanBus::float_to_uint(float x_float, float x_min, float x_max, int bits)
+{
+  /* Converts a float to an unsigned int, given range and number of bits */
+  float span = x_max - x_min;
+  float offset = x_min;
+  return (int) ((x_float-offset)*((float)((1<<bits)-1))/span);
+}
 }  // namespace rm_hw

@@ -114,7 +114,7 @@ void SocketTcp::write(can_frame* frame) const
     return;
   }
 
-    //can帧转tcp 
+  // can帧转tcp
   // send_buf[0] = 8;
   // send_buf[1] = 0;
   // send_buf[2] = 0;
@@ -122,7 +122,7 @@ void SocketTcp::write(can_frame* frame) const
 
   // for(int i=0;i<8;i++)
   // {
-  //   send_buf[i+5] = frame->data[i]; 
+  //   send_buf[i+5] = frame->data[i];
   // }
   // // if(frame->can_id == 0x200)
   //   // {
@@ -133,23 +133,23 @@ void SocketTcp::write(can_frame* frame) const
   //   send_buf[4] = 255 ;
   //   }
 
-  //新
+  // 新
   send_buf[0] = 8;
   send_buf[1] = 0;
   send_buf[2] = 0;
   send_buf[3] = 0;
   // if(frame->can_id == 0x200)
-    // {
-      send_buf[4] = frame->can_id;
-    // }
+  // {
+  send_buf[4] = frame->can_id;
+  // }
   // if(frame->can_id == 0x1FF)
   //   {
   //   send_buf[4] = 255 ;
   //   }
   // memcpy(send_buf + 4, frame->data, 8);
-    for(int i=0;i<8;i++)
+  for (int i = 0; i < 8; i++)
   {
-    send_buf[i+5] = frame->data[i]; 
+    send_buf[i + 5] = frame->data[i];
   }
 
   if (::send(sock_fd_, send_buf, sizeof(send_buf), 0) == -1)  

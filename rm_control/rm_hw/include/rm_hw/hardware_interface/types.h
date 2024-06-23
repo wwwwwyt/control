@@ -42,6 +42,11 @@
 #include <rm_common/filters/imu_filter_base.h>
 #include <unordered_map>
 
+#define ECD_ANGLE_COEF_LK (360.0f / 65536.0f)
+#define SPEED_SMOOTH_COEF 0.85f
+#define DEGREE_2_RAD 0.01745329252f // pi/180
+#define CURRENT_SMOOTH_COEF 0.9f
+
 namespace rm_hw
 {
 struct ActCoeff
@@ -55,19 +60,22 @@ struct ActData
   std::string name;
   std::string type;
   ros::Time stamp;
+  uint16_t state; //暂时达妙
   uint64_t seq;
   bool halted = false, need_calibration = false, calibrated = false, calibration_reading = false;
-  uint16_t q_raw;
-  int16_t qd_raw;
-  uint8_t temp;
-  int64_t q_circle;
-  uint16_t q_last;
-  double frequency;
-  double pos, vel, effort;
-  double cmd_pos, cmd_vel, cmd_effort, exe_effort;
-  double offset;
+  uint16_t q_raw;//原始位置
+  float angle_single_round; // 单圈角度
+  int16_t qd_raw;//原始速度
+  int16_t t_int;
+  uint8_t temp;//温度
+  int64_t q_circle;//
+  uint16_t q_last;//上一次位置数据
+  double frequency;//频率数据（执行器操作频率）
+  double pos, vel, effort;//存储执行器的 位置 速度 力
+  double cmd_pos, cmd_vel, cmd_effort, exe_effort;//存储期望的执行器 位置 速度 命令力  实际力
+  double offset;//偏移 处理执行器读数
   // For multiple cycle under absolute encoder (RoboMaster motor)
-  LowPassFilter* lp_filter;
+  LowPassFilter* lp_filter;//低通滤波
 };
 
 struct ImuData

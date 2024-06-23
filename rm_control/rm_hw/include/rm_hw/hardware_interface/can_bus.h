@@ -45,6 +45,18 @@
 #include <mutex>
 #include <thread>
 
+
+#define P_MIN_8009 -12.5f
+#define P_MAX_8009 12.5f
+#define V_MIN_8009 -45.0f
+#define V_MAX_8009 45.0f
+#define KP_MIN 0.0f
+#define KP_MAX 500.0f
+#define KD_MIN 0.0f
+#define KD_MAX 5.0f
+#define T_MIN_8009 -50.0f
+#define T_MAX_8009 50.0f
+
 namespace rm_hw
 {
 struct CanFrameStamp
@@ -106,6 +118,32 @@ public:
   void write();
 
   void write(can_frame* frame);
+  
+  /**
+  ************************************************************************
+  * @brief:      	uint_to_float: 无符号整数转换为浮点数函数
+  * @param[in]:   x_int: 待转换的无符号整数
+  * @param[in]:   x_min: 范围最小值
+  * @param[in]:   x_max: 范围最大值
+  * @param[in]:   bits:  无符号整数的位数
+  * @retval:     	浮点数结果
+  * @details:    	将给定的无符号整数 x_int 在指定范围 [x_min, x_max] 内进行线性映射，映射结果为一个浮点数
+  ************************************************************************
+  **/
+  float uint_to_float(int x_int, float x_min, float x_max, int bits);
+
+  /**
+  ************************************************************************
+  * @brief:      	float_to_uint: 浮点数转换为无符号整数函数
+  * @param[in]:   x_float:	待转换的浮点数
+  * @param[in]:   x_min:		范围最小值
+  * @param[in]:   x_max:		范围最大值
+  * @param[in]:   bits: 		目标无符号整数的位数
+  * @retval:     	无符号整数结果
+  * @details:    	将给定的浮点数 x 在指定范围 [x_min, x_max] 内进行线性映射，映射结果为一个指定位数的无符号整数
+  ************************************************************************
+  **/
+  int float_to_uint(float x_float, float x_min, float x_max, int bits);
 
   const std::string bus_name_;
 

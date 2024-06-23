@@ -1,22 +1,22 @@
 <launch>
-    <arg name="robot_type" default="hero"/>
+    <arg name="robot_type" default="balance"/>
     <arg name="debug" default="false"/>
     <arg name="load_chassis" default="true"/>
     <arg name="load_gimbal" default="false"/>
     <arg name="load_shooter" default="false"/>
-    <arg name="load_arm" default="true"/>
+    <arg name="load_arm" default="false"/>
 
     <arg unless="$(arg debug)" name="launch_prefix" value="true"/>
     <arg if="$(arg debug)" name="launch_prefix" value="gdbserver :1234"/>
 
-    <param name="robot_description" command="$(find xacro)/xacro $(find rm_description)/urdf/standard4/standard4.urdf.xacro
+    <param name="robot_description" command="$(find xacro)/xacro $(find rm_description)/urdf/balance/balance.urdf.xacro
          load_chassis:=$(arg load_chassis) load_gimbal:=$(arg load_gimbal) load_shooter:=$(arg load_shooter)
          load_arm:=$(arg load_arm)
          use_simulation:=false roller_type:=none
 "/>
 
     <rosparam file="$(find rm_hw)/config/actuator_coefficient.yaml" command="load" ns="rm_hw"/>
-    <rosparam file="$(find rm_hw)/config/hero.yaml" command="load"/>
+    <rosparam file="$(find rm_hw)/config/balance.yaml" command="load"/>
 
     <node name="rm_hw"  pkg="rm_hw" type="rm_hw" respawn="false"
           clear_params="true"/>

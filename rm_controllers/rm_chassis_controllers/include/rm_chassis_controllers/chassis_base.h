@@ -217,7 +217,7 @@ protected:
     float v_set;//期望速度，单位是m/s
     float x_set;//期望位置，单位是m
     float turn_set;//期望yaw轴弧度
-    float leg_set;//期望腿长，单位是m
+    float leg_set{0.15};//期望腿长，单位是m
     float last_leg_set;
 
     float v_filter;//滤波后的车体速度，单位是m/s

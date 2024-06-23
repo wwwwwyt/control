@@ -11,7 +11,7 @@ rm_hw:
     mit_joint_motor:
       bus: can0
       id: 0x203
-      type: rm_3508
+      type: dm_8009
       lp_cutoff_frequency: 150  
 controllers:
   robot_state_controller:

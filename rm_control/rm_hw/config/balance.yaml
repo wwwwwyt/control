@@ -14,7 +14,7 @@ rm_hw:
       lp_cutoff_frequency: 150  
     left_back_leg_joint_motor:
       bus: can0
-      id: 0x00
+      id: 0x01
       type: dm_8009
       lp_cutoff_frequency: 150
     right_front_leg_joint_motor:
@@ -26,7 +26,17 @@ rm_hw:
       bus: can0
       id: 0x04
       type: dm_8009
-      lp_cutoff_frequency: 150            
+      lp_cutoff_frequency: 150     
+    # left_wheel_motor:
+    #   bus: can1
+    #   id: 0x01
+    #   type: dm_8009
+    #   lp_cutoff_frequency: 150       
+    # right_wheel_motor:
+    #   bus: can1
+    #   id: 0x02
+    #   type: dm_8009
+    #   lp_cutoff_frequency: 150                  
   # imus:
   #   base_imu:
   #     frame_id: base_imu
