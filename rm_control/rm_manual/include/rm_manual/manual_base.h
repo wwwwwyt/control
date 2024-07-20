@@ -136,6 +136,8 @@ protected:
   {
     state_ = PC;
   }
+  
+  int8_t contoll_set{0};
 
   ros::Publisher manual_to_referee_pub_;
 
