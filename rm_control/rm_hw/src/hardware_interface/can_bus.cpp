@@ -45,13 +45,20 @@ CanBus::CanBus(const std::string& bus_name, CanDataPtr data_ptr, int thread_prio
   : bus_name_(bus_name), data_ptr_(data_ptr)
 {
   // Initialize device at can_device, false for no loop back.
-
+if(bus_name =="can1")
+{
   socket_tcp_can1.open(bus_name, boost::bind(&CanBus::frameCallback, this, _1), thread_priority) && ros::ok();
     ros::Duration(.5).sleep();   
-     
+//   ROS_INFO("can1 connected to %s.", bus_name.c_str());
+}
+
+if(bus_name == "can0")
+{     
   socket_tcp_can0.open(bus_name, boost::bind(&CanBus::frameCallback, this, _1), thread_priority) && ros::ok();
     ros::Duration(.5).sleep();
-  ROS_INFO("Successfully connected to %s.", bus_name.c_str());
+  // ROS_INFO("can2 connected to %s.", bus_name.c_str());  
+}
+  // ROS_INFO("Successfully connected to %s.", bus_name.c_str());
   // Set up CAN package header
   rm_frame0_.can_id = 0x200;
   rm_frame0_.can_dlc = 8;
@@ -62,6 +69,7 @@ CanBus::CanBus(const std::string& bus_name, CanDataPtr data_ptr, int thread_prio
 void CanBus::write()
 {
   // safety first
+  bool has_write_frame0 = false, has_write_frame1 = false;
   std::fill(std::begin(rm_frame0_.data), std::end(rm_frame0_.data), 0);
   std::fill(std::begin(rm_frame1_.data), std::end(rm_frame1_.data), 0);
 
@@ -88,28 +96,6 @@ void CanBus::write()
         socket_tcp_can1.write(&rm_frame1_);
       }
     }
-    // else if (item.second.type.find("cheetah") != std::string::npos)
-    // {
-      // can_frame frame{};
-      // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
-      // frame.can_id = item.first;
-      // frame.can_dlc = 8;
-      // uint16_t q_des = static_cast<int>(act_coeff.pos2act * (item.second.cmd_pos - act_coeff.act2pos_offset));
-      // uint16_t qd_des = static_cast<int>(act_coeff.vel2act * (item.second.cmd_vel - act_coeff.act2vel_offset));
-      // uint16_t kp = 0.;
-      // uint16_t kd = 0.;
-      // uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset));
-      // // TODO(qiayuan) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
-      // frame.data[0] = q_des >> 8;
-      // frame.data[1] = q_des & 0xFF;
-      // frame.data[2] = qd_des >> 4;
-      // frame.data[3] = ((qd_des & 0xF) << 4) | (kp >> 8);
-      // frame.data[4] = kp & 0xFF;
-      // frame.data[5] = kd >> 4;
-      // frame.data[6] = ((kd & 0xF) << 4) | (tau >> 8);
-      // frame.data[7] = tau & 0xff;
-      // socket_can_.write(&frame);
-    // }
     else if (item.second.type.find("dm") != std::string::npos)
     {
       // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
@@ -118,29 +104,52 @@ void CanBus::write()
       uint16_t pos_tmp,vel_tmp,kp_tmp{0},kd_tmp{0},tor_tmp;     
       pos_tmp = CanBus::float_to_uint(item.second.cmd_pos,  P_MIN_8009,  P_MAX_8009,  16);
       vel_tmp = CanBus::float_to_uint(item.second.cmd_vel,  V_MIN_8009,  V_MAX_8009,  12);
-      // kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12); //结构体无控制pid数据 且这里不控制pid 所以直接给0
+      // kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12); 
       // kd_tmp  = float_to_uint(kd,   KD_MIN, KD_MAX, 12);
       tor_tmp = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  12);
 
       // TODO(wyt) add position vel and effort hardware interface for DM Motor, now we using it as an effort joint.
-      rm_frame0_.data[0] = pos_tmp >> 8;
-      rm_frame0_.data[1] = pos_tmp;
-      rm_frame0_.data[2] = vel_tmp >> 4;
-      rm_frame0_.data[3] = ((vel_tmp & 0xF) << 4) | (kp_tmp >> 8);
-      rm_frame0_.data[4] = kp_tmp ;
-      rm_frame0_.data[5] = kd_tmp >> 4;
-      rm_frame0_.data[6] = ((kd_tmp & 0xF) << 4) | (tor_tmp >> 8);
-      rm_frame0_.data[7] = tor_tmp ;
-
-      rm_frame0_.data[0] = 0xFF;//使能帧
-      rm_frame0_.data[1] = 0xFF;
-      rm_frame0_.data[2] = 0xFF;
-      rm_frame0_.data[3] = 0xFF;
-      rm_frame0_.data[4] = 0xFF;
-      rm_frame0_.data[5] = 0xFF;
-      rm_frame0_.data[6] = 0xFF;
-      rm_frame0_.data[7] = 0xFC;      
-
+      if(item.second.cmd_effort <= 20 && item.second.cmd_effort >= -20)
+      {
+        rm_frame0_.data[0] = pos_tmp >> 8;
+        rm_frame0_.data[1] = pos_tmp;
+        rm_frame0_.data[2] = vel_tmp >> 4;
+        rm_frame0_.data[3] = ((vel_tmp & 0xF) << 4) | (kp_tmp >> 8);
+        rm_frame0_.data[4] = kp_tmp ;
+        rm_frame0_.data[5] = kd_tmp >> 4;
+        rm_frame0_.data[6] = ((kd_tmp & 0xF) << 4) | (tor_tmp >> 8);
+        rm_frame0_.data[7] = tor_tmp ;
+      }
+      else if(item.second.cmd_effort == 21 )
+      {
+        rm_frame0_.data[0] = 0xFF;//使能帧
+        rm_frame0_.data[1] = 0xFF;
+        rm_frame0_.data[2] = 0xFF;
+        rm_frame0_.data[3] = 0xFF;
+        rm_frame0_.data[4] = 0xFF;
+        rm_frame0_.data[5] = 0xFF;
+        rm_frame0_.data[6] = 0xFF;
+        rm_frame0_.data[7] = 0xFC;      
+      }
+      else
+      {
+        rm_frame0_.data[0] = 0xFF;//ui能帧
+        rm_frame0_.data[1] = 0xFF;
+        rm_frame0_.data[2] = 0xFF;
+        rm_frame0_.data[3] = 0xFF;
+        rm_frame0_.data[4] = 0xFF;
+        rm_frame0_.data[5] = 0xFF;
+        rm_frame0_.data[6] = 0xFF;
+        rm_frame0_.data[7] = 0xFD;            
+      }
+        // rm_frame0_.data[0] = 0xFF;//使能帧
+        // rm_frame0_.data[1] = 0xFF;
+        // rm_frame0_.data[2] = 0xFF;
+        // rm_frame0_.data[3] = 0xFF;
+        // rm_frame0_.data[4] = 0xFF;
+        // rm_frame0_.data[5] = 0xFF;
+        // rm_frame0_.data[6] = 0xFF;
+        // rm_frame0_.data[7] = 0xFC;           
       // rm_frame0_.data[0] = 0xFF;//保存零点 （ 在机械拆装腿时 摆到上限位处理零点 vmc拿机械数据－电机角度
       // rm_frame0_.data[1] = 0xFF;
       // rm_frame0_.data[2] = 0xFF;
@@ -149,39 +158,39 @@ void CanBus::write()
       // rm_frame0_.data[5] = 0xFF;
       // rm_frame0_.data[6] = 0xFF;
       // rm_frame0_.data[7] = 0xFE;    
-      
-      socket_tcp_can0.write(&rm_frame0_);
+
+      // rm_frame0_.data[0] = 0xFF;//shi neng
+      // socket_tcp_can0.write(&rm_frame0_);
+      has_write_frame0 = true;
       // std::cout<<"write success !!!"<<std::endl;
     }    
     else if (item.second.type.find("lk") != std::string::npos)
     {
-      const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
-      rm_frame0_.can_id = item.first + 0x04;
-      uint16_t q_des = static_cast<int>(act_coeff.pos2act * (item.second.cmd_pos - act_coeff.act2pos_offset)); //期望位置
-      uint16_t qd_des = static_cast<int>(act_coeff.vel2act * (item.second.cmd_vel - act_coeff.act2vel_offset)); //期望速度
-      uint16_t kp = 0.;
-      uint16_t kd = 0.;
-      uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset)); //期望力矩
+      // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
+
+      rm_frame1_.can_id = 0x280;
+      int id = item.first - 0x140;
+      // uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset)); //期望力矩
+      uint16_t tau = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  16);
+       tau = 0;
+
       // TODO(wyt) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
-      rm_frame0_.data[0] = q_des >> 8;
-      rm_frame0_.data[1] = q_des;
-      rm_frame0_.data[2] = qd_des >> 4;
-      rm_frame0_.data[3] = ((qd_des & 0xF) << 4) | (kp >> 8);
-      rm_frame0_.data[4] = kp ;
-      rm_frame0_.data[5] = kd >> 4;
-      rm_frame0_.data[6] = ((kd & 0xF) << 4) | (tau >> 8);
-      rm_frame0_.data[7] = tau ;
 
-	// rm_frame0_.data[0] = 0xFF;
-	// rm_frame0_.data[1] = 0xFF;r
-	// rm_frame0_.data[2] = 0xFF;
-	// rm_frame0_.data[3] = 0xFF;
-	// rm_frame0_.data[4] = 0xFF;
-	// rm_frame0_.data[5] = 0xFF;
-	// rm_frame0_.data[6] = 0xFF;
-	// rm_frame0_.data[7] = 0xFC;      
+      // memcpy(rm_frame1_.data + (item.first- 0x280) * 2, &tau, sizeof(uint16_t));
+      if(id == 1)
+       {
+        rm_frame1_.data[0] = *(uint8_t*)(&tau);
+        rm_frame1_.data[1] = *((uint8_t*)(&tau)+1);
+       }
+       if(id == 2)
+       {
+        rm_frame1_.data[2] = *(uint8_t*)(&tau);
+        rm_frame1_.data[3] = *((uint8_t*)(&tau)+1);
+       }
 
-  socket_tcp_can0.write(&rm_frame0_);
+      ROS_INFO("RESULT---  %d ", id);
+      has_write_frame1 = true;
+      // socket_tcp_can1.write(&rm_frame1_);
       // std::cout<<"write success !!!"<<std::endl;
       // socket_can_.write(&frame);
     }    
@@ -206,6 +215,18 @@ void CanBus::write()
       frame.data[6] = ((kd & 0xF) << 4) | (tau >> 8);
       frame.data[7] = tau & 0xff;
       socket_can_.write(&frame);
+    }
+    if (has_write_frame0)
+    {
+      // socket_can_.write(&rm_frame0_);
+      socket_tcp_can0.write(&rm_frame0_);
+    }
+    if (has_write_frame1)
+    {
+      // socket_can_.write(&rm_frame1_);
+      // ROS_INFO("can1 write  waiting..");
+      socket_tcp_can1.write(&rm_frame1_);
+      ROS_INFO("can1 write success..");
     }
   }
 
@@ -321,7 +342,11 @@ void CanBus::read(ros::Time time)
     //     }
     //   }
     // }
-    if (data_ptr_.id2act_data_->find(frame.can_id) != data_ptr_.id2act_data_->end())
+    // if (data_ptr_.id2act_data_->find(frame.can_id) != data_ptr_.id2act_data_->end()) //dm
+    if(frame.can_id == static_cast<unsigned int>(0x01) || 
+       frame.can_id == static_cast<unsigned int>(0x02) ||
+       frame.can_id == static_cast<unsigned int>(0x03) || 
+       frame.can_id == static_cast<unsigned int>(0x04))
     {
       // if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
       // {
@@ -359,77 +384,38 @@ void CanBus::read(ros::Time time)
         }
       // }
     }
-    else if (data_ptr_.id2act_data_->find(frame.can_id) != data_ptr_.id2act_data_->end())
+    else if (frame.can_id == static_cast<unsigned int>(0x141) || frame.can_id == static_cast<unsigned int>(0x142)) //lk
     {
       // if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
       // {
         ActData& act_data = data_ptr_.id2act_data_->find(frame.can_id)->second;
-        const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
+        // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(act_data.type)->second;
         if (act_data.type.find("lk") != std::string::npos)
         {  
-        // measure->feed_dt = DWT_GetDeltaT(&measure->feed_dwt_cnt);
-
-        act_data.q_last = act_data.pos;
-        // measure->ecd = (uint16_t)((rx_buff[7] << 8) | rx_buff[6]);
-        act_data.pos = (uint16_t)((frame.data[7] << 8) | frame.data[6]);
-        // measure->angle_single_round = ECD_ANGLE_COEF_LK * measure->ecd;
-        act_data.angle_single_round = ECD_ANGLE_COEF_LK * act_data.pos;
-        // measure->speed_rads = (1 - SPEED_SMOOTH_COEF) * measure->speed_rads +
-        //                       DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(rx_buff[5] << 8 | rx_buff[4]));
-        act_data.vel = (1 - SPEED_SMOOTH_COEF) * act_data.vel +
-                              DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));
-        // measure->real_current = (1 - CURRENT_SMOOTH_COEF) * measure->real_current +
-        //                         CURRENT_SMOOTH_COEF * (float)((int16_t)(rx_buff[3] << 8 | rx_buff[2]));
-        act_data.effort = (1 - CURRENT_SMOOTH_COEF) * act_data.effort +
-                                CURRENT_SMOOTH_COEF * (float)((int16_t)(frame.data[3] << 8 | frame.data[2]));
-        // measure->temperature = rx_buff[1];
-        act_data.temp = frame.data[1];
-
-        // if (measure->ecd - measure->last_ecd > 32768)
-        //     measure->total_round--;
-        // else if (measure->ecd - measure->last_ecd < -32768)
-        //     measure->total_round++;
-        if (act_data.pos - act_data.q_last > 32768)
-            act_data.q_circle--;
-        else if (act_data.pos - act_data.q_last< -32768)
-            act_data.q_circle++; 
-        // measure->total_angle = measure->total_round * 360 + measure->angle_single_round;
-
-          act_data.q_raw = (frame.data[1] << 8) | frame.data[2];
-          uint16_t qd = (frame.data[3] << 4) | (frame.data[4] >> 4);
-          uint16_t cur = ((frame.data[4] & 0xF) << 8) | frame.data[5];
-          // Multiple cycle
-          // NOTE: The raw data range is -4pi~4pi
-          if (act_data.seq != 0)  // not the first receive
-          {
-            double pos_new = act_coeff.act2pos * static_cast<double>(act_data.q_raw) + act_coeff.act2pos_offset +
-                             static_cast<double>(act_data.q_circle) * 8 * M_PI + act_data.offset;
-            if (pos_new - act_data.pos > 4 * M_PI)
+          act_data.q_last = act_data.pos;
+          act_data.pos = (uint16_t)((frame.data[7] << 8) | frame.data[6]);
+          act_data.angle_single_round = ECD_ANGLE_COEF_LK * act_data.pos;
+          act_data.vel = (1 - SPEED_SMOOTH_COEF) * act_data.vel +
+                                DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));          
+          act_data.effort = (1 - CURRENT_SMOOTH_COEF) * act_data.effort +
+                                  CURRENT_SMOOTH_COEF * (float)((int16_t)(frame.data[3] << 8 | frame.data[2]));
+          act_data.temp = frame.data[1];
+          if (act_data.pos - act_data.q_last > 32768)
               act_data.q_circle--;
-            else if (pos_new - act_data.pos < -4 * M_PI)
+          else if (act_data.pos - act_data.q_last < -32768)
               act_data.q_circle++;
-          }
-          try
-          {  // Duration will be out of dual 32-bit range while motor failure
-            act_data.frequency = 1. / (frame_stamp.stamp - act_data.stamp).toSec();
-          }
-          catch (std::runtime_error& ex)
-          {
-          }
-          act_data.stamp = frame_stamp.stamp;
-          act_data.seq++;
-          act_data.pos = act_coeff.act2pos * static_cast<double>(act_data.q_raw) + act_coeff.act2pos_offset +
-                         static_cast<double>(act_data.q_circle) * 8 * M_PI + act_data.offset;
-          // Converter raw CAN data to position velocity and effort.
-          act_data.vel = act_coeff.act2vel * static_cast<double>(qd) + act_coeff.act2vel_offset;
-          act_data.effort = act_coeff.act2effort * static_cast<double>(cur) + act_coeff.act2effort_offset;
-          // Low pass filter
-          // act_data.lp_filter->input(act_data.vel);
-          // act_data.vel = act_data.lp_filter->output();
+          act_data.total_angle = act_data.q_circle * 360 + act_data.angle_single_round;          
+        try
+        {  // Duration will be out of dual 32-bit range while motor failure
+          act_data.frequency = 1. / (frame_stamp.stamp - act_data.stamp).toSec();
+        }
+        catch (std::runtime_error& ex)
+        {
+        }
           continue;
         }
       // }
-    }         
+    }           
     else if((CAN_PACKET_ID)frame.can_id>>8  == CAN_PACKET_STATUS)
     {
       if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())

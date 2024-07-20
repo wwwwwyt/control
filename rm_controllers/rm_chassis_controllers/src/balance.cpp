@@ -133,7 +133,7 @@ bool BalanceController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHan
 
 
 	
-  
+  BalanceController::motor_init();
   VMC_init(&left, l1_, l2_, l3_, l4_, l5_);//给杆长赋值
 	VMC_init(&right, l1_, l2_, l3_, l4_, l5_);
 
@@ -168,20 +168,23 @@ void BalanceController::moveJoint(const ros::Time& time, const ros::Duration& pe
 	// }
 
   balanceL_control_loop(&chassis_move,&left,&ins,LQR_K,period);//控制计算
-	balanceR_control_loop(&chassis_move,&right,&ins,LQR_K,period);//控制计算		 //load controller
+	// balanceR_control_loop(&chassis_move,&right,&ins,LQR_K,period);//控制计算		 //load controller
 
   // if(chassis_move.start_flag==1)	
   // {
       // 左前 左后 
-    left_front_joint_handle_.setCommand(left.torque_set[1]);
-    left_back_joint_handle_ .setCommand(left.torque_set[0]);
+    left_front_joint_handle_.setCommand(left.torque_set[0]);
+    left_back_joint_handle_ .setCommand(left.torque_set[1]);
     // //右
-    // right_front_joint_handle_ .setCommand(right.torque_set[1]);
-    // right_back_joint_handle_.setCommand(right.torque_set[0]);
+    // right_front_joint_handle_ .setCommand(right.torque_set[0]);
+    // right_back_joint_handle_.setCommand(right.torque_set[1]);
+    
+    // right_front_joint_handle_ .setCommand(2.0);    
+    // right_back_joint_handle_.setCommand(2.0);
     // // 俩轮
     // left_wheel_joint_handle_ .setCommand(chassis_move.wheel_motor[1].wheel_T);
     // right_wheel_joint_handle_ .setCommand(chassis_move.wheel_motor[0].wheel_T);
-    ROS_INFO("RESULT :  %f | %f | %f | %f ", left.torque_set[1],left.torque_set[0],right.torque_set[1],right.torque_set[0]);
+    ROS_INFO("RESULT :  %f | %f | %f | %f ", left.torque_set[0],left.torque_set[1],right.torque_set[0],right.torque_set[1]);
   // }
   // else if(chassis_move.start_flag==0)	
   // {
@@ -196,6 +199,11 @@ void BalanceController::moveJoint(const ros::Time& time, const ros::Duration& pe
   //   // right_wheel_joint_handle_ .setCommand(0);
   //   ROS_INFO("left_front: ");
   // }
+  if(!motor_init_)
+  {
+    BalanceController::motor_init();
+    motor_init_+=1;
+  }
 }
 
 void BalanceController::balanceL_control_loop(chassis_t *chassis,vmc_leg_t *vmcl,INS_t *ins,float *LQR_K,const ros::Duration& period)
@@ -228,7 +236,7 @@ void BalanceController::balanceL_control_loop(chassis_t *chassis,vmc_leg_t *vmcl
 	
 	vmcl->Tp += chassis->leg_tp;//髋关节输出力矩
 		// vmcl->F0=13.0f+PID_Calc(leg,vmcl->L0,chassis->leg_set);//前馈+pd
-	vmcl->F0=pid_l_.computeCommand(chassis->leg_set - vmcl->L0 , period);;//前馈 + pd
+	vmcl->F0=13.0f+pid_l_.computeCommand(chassis->leg_set - vmcl->L0 , period);;//前馈 + pd
 	ROS_INFO("VMC : | F0: %f | leg_d :%f | pid: %f ", vmcl->F0,chassis->leg_set - vmcl->L0,pid_l_.computeCommand(chassis->leg_set - vmcl->L0 , period));  		   
 
 	// left_flag=ground_detectionL(vmcl,ins);//左腿离地检测
@@ -259,11 +267,11 @@ void BalanceController::balanceL_control_loop(chassis_t *chassis,vmc_leg_t *vmcl
 	
 	BalanceController::VMC_calc_2(vmcl);//计算期望的关节输出力矩
 	
-  // ROS_INFO("RESULT---  || torque_set[1]: %f | torque_set[0]: %f ", vmcl->torque_set[1] ,vmcl->torque_set[0]);
+  ROS_INFO("RESULT---  || torque_set[1]: %f | torque_set[0]: %f ", vmcl->torque_set[1] ,vmcl->torque_set[0]);
   
   //额定扭矩
-  BalanceController::mySaturate(&vmcl->torque_set[1],-5.0f,5.0f);	
-	BalanceController::mySaturate(&vmcl->torque_set[0],-5.0f,5.0f);	
+  BalanceController::mySaturate(&vmcl->torque_set[1],-3.0f,3.0f);	
+	BalanceController::mySaturate(&vmcl->torque_set[0],-3.0f,3.0f);	
   // ROS_INFO("RESULT  || torque_set[1]: %f | torque_set[0]: %f ", vmcl->torque_set[1] ,vmcl->torque_set[0]);  
 }
 
@@ -283,7 +291,7 @@ void BalanceController::balanceR_control_loop(chassis_t *chassis,vmc_leg_t *vmcr
   Turn_Pid.getGains(p_,i_,d_,i_max_,i_min_);
   chassis->turn_T=p_*(vel_cmd_.z-chassis->total_yaw)-d_*ins->Gyro[2];//这样计算更稳一点
 
-	chassis->leg_tp=Tp_Pid.computeCommand( -chassis->theta_err , period);//防劈叉pid计算
+	// chassis->leg_tp=Tp_Pid.computeCommand( -chassis->theta_err , period);//防劈叉pid计算
 	
 	chassis->wheel_motor[0].wheel_T=(LQR_K[0]*(vmcr->theta-0.0f)
 																	+LQR_K[1]*(vmcr->d_theta-0.0f)
@@ -305,8 +313,8 @@ void BalanceController::balanceR_control_loop(chassis_t *chassis,vmc_leg_t *vmcr
 	
 	vmcr->Tp += chassis->leg_tp;//髋关节输出力矩
 
-	vmcr->F0=13.0f+pid_r_.computeCommand(chassis->leg_set - vmcr->L0 , period);//前馈+pd
-		
+	// vmcr->F0=13.0f+pid_r_.computeCommand(chassis->leg_set - vmcr->L0 , period);//前馈+pd
+	vmcr->F0=0.0f+pid_r_.computeCommand(chassis->leg_set - vmcr->L0 , period);//前馈+pd		
 	// right_flag=ground_detectionR(vmcr,ins);//右腿离地检测
 	 
 	//  if(chassis->recover_flag==0)		
@@ -335,7 +343,7 @@ void BalanceController::balanceR_control_loop(chassis_t *chassis,vmc_leg_t *vmcr
 	BalanceController::mySaturate(&vmcr->F0,-100.0f,100.0f);//限幅 
 	
 	BalanceController::VMC_calc_2(vmcr);//计算期望的关节输出力矩
-
+  ROS_INFO("RESULT---  || torque_set[1]: %f | torque_set[0]: %f ", vmcr->torque_set[1] ,vmcr->torque_set[0]);
 	//额定扭矩
   BalanceController::mySaturate(&vmcr->torque_set[1],-3.0f,3.0f);	
 	BalanceController::mySaturate(&vmcr->torque_set[0],-3.0f,3.0f);		
@@ -491,6 +499,31 @@ void BalanceController::VMC_init(vmc_leg_t *vmc,double l1, double l2, double l3,
 	vmc->l4=l4;//单位为m
 }
 
+void BalanceController::motor_init()
+{
+
+  for(int j=0;j<10;j++)
+  {    
+    right_front_joint_handle_ .setCommand(21);
+    ros::Duration d(0.001);
+  }
+  for(int j=0;j<10;j++)
+  {
+    right_back_joint_handle_.setCommand(21);
+    ros::Duration d(0.001);
+  }  
+  ROS_INFO("motor init >> ");  
+  for(int j=0;j<10;j++)
+  {
+    left_front_joint_handle_.setCommand(21);
+    ros::Duration d(0.001); // 1毫秒
+  }
+  for(int j=0;j<10;j++)
+  {    
+    left_back_joint_handle_ .setCommand(21);
+    ros::Duration d(0.001);
+  }  
+}
 
 void BalanceController::VMC_calc_1_right(vmc_leg_t *vmc,INS_t *ins,float dt)//计算theta和d_theta给lqr用，同时也计算腿长L0
 {		
@@ -610,6 +643,8 @@ void BalanceController::VMC_calc_2(vmc_leg_t *vmc)//计算期望的关节输出�
     ROS_INFO("j12_  : j11: %f | j12: %f | j21: %f  | yy: %f ", vmc->l1 ,vmc->phi0 , vmc->phi3 ,cos(vmc->phi0-vmc->phi3) );
     ROS_INFO("j12   : j11: %f | j12: %f | j21: %f  ", vmc->l1*cos(vmc->phi0-vmc->phi3) ,sin(vmc->phi1-vmc->phi2),vmc->L0*sin(vmc->phi3-vmc->phi2));
     ROS_INFO("test : j11: %f | j12: %f | j21: %f | j22: %f | f0: %f | fp: %f ", vmc->j11 ,vmc->j12,vmc->j21,vmc->j22,vmc->F0,vmc->Tp);
+
+    ROS_INFO("j22 : j22: %f | j22_: %f | j22__: %f ", vmc->torque_set[1],vmc->j21*vmc->F0,vmc->j22*vmc->Tp);
 }
 
 uint8_t BalanceController::ground_detectionR(vmc_leg_t *vmc,INS_t *ins)

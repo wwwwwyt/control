@@ -63,13 +63,15 @@ struct ActData
   uint16_t state; //暂时达妙
   uint64_t seq;
   bool halted = false, need_calibration = false, calibrated = false, calibration_reading = false;
-  uint16_t q_raw;//原始位置
+  uint16_t q_raw;// 原始位置(角度)
   float angle_single_round; // 单圈角度
-  int16_t qd_raw;//原始速度
+  int16_t qd_raw;//速度
   int16_t t_int;
   uint8_t temp;//温度
-  int64_t q_circle;//
-  uint16_t q_last;//上一次位置数据
+
+  int64_t q_circle;//圈数
+  uint16_t q_last;//上一次位置(角度)数据
+  float total_angle;//总角度
   double frequency;//频率数据（执行器操作频率）
   double pos, vel, effort;//存储执行器的 位置 速度 力
   double cmd_pos, cmd_vel, cmd_effort, exe_effort;//存储期望的执行器 位置 速度 命令力  实际力

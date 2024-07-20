@@ -115,8 +115,10 @@ void SocketCAN::write(can_frame* frame) const
     ROS_ERROR_THROTTLE(5., "soc can Unable to write: Socket %s not open", interface_request_.ifr_name);
     return;
   }
+  ROS_INFO("send success ---  %d ", sock_fd_); 
   if (::write(sock_fd_, frame, sizeof(can_frame)) == -1)
     ROS_DEBUG_THROTTLE(5., "Unable to write: The %s tx buffer may be full", interface_request_.ifr_name);
+  ROS_INFO("send success ---  %d ", sock_fd_);  
 }
 
 static void* socketcan_receiver_thread(void* argv)

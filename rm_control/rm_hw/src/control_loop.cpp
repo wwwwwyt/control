@@ -91,13 +91,13 @@ void RmRobotHWLoop::update()
   elapsed_time_ = ros::Duration(time_span.count());
   last_time_ = current_time;
 
-  // Check cycle time for excess delay
-  const double cycle_time_error = (elapsed_time_ - ros::Duration(desired_duration.count())).toSec();
-  if (cycle_time_error > cycle_time_error_threshold_)
-    ROS_WARN_STREAM("Cycle time exceeded error threshold by: " << cycle_time_error - cycle_time_error_threshold_
-                                                               << "s, "
-                                                               << "cycle time: " << elapsed_time_ << "s, "
-                                                               << "threshold: " << cycle_time_error_threshold_ << "s");
+  // // Check cycle time for excess delay
+  // const double cycle_time_error = (elapsed_time_ - ros::Duration(desired_duration.count())).toSec();
+  // if (cycle_time_error > cycle_time_error_threshold_)
+  //   ROS_WARN_STREAM("Cycle time exceeded error threshold by: " << cycle_time_error - cycle_time_error_threshold_
+  //                                                              << "s, "
+  //                                                              << "cycle time: " << elapsed_time_ << "s, "
+  //                                                              << "threshold: " << cycle_time_error_threshold_ << "s");
   // Input
   // get the hardware's state
   hardware_interface_->read(ros::Time::now(), elapsed_time_);

@@ -23,9 +23,6 @@
                    controllers/joint_state_controller
                    controllers/robot_state_controller
                    controllers/joint_mit_cheetah_position_controller
-                   controllers/joint_mit_cheetah_vel_controller
-
-
     "/>
 
 </launch>

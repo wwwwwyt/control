@@ -83,6 +83,8 @@ bool SocketTcp::open(const std::string& interface, boost::function<void(const ca
         std::cout<<"TCP connect error"<<std::endl;
         return false;
     }
+
+    ROS_INFO("Successfully connected to %s.", interface.c_str());
   reception_handler = std::move(handler);
   return startReceiverThread(thread_priority);
 }
@@ -113,7 +115,7 @@ void SocketTcp::write(can_frame* frame) const
     ROS_ERROR_THROTTLE(5., "tcp Unable to write: Socket %s not open", interface_request_.ifr_name);
     return;
   }
-
+  
   // can帧转tcp
   // send_buf[0] = 8;
   // send_buf[1] = 0;
@@ -137,20 +139,29 @@ void SocketTcp::write(can_frame* frame) const
   send_buf[0] = 8;
   send_buf[1] = 0;
   send_buf[2] = 0;
-  send_buf[3] = 0;
-  // if(frame->can_id == 0x200)
-  // {
+  send_buf[3] = frame->can_id >> 8;
   send_buf[4] = frame->can_id;
+  // if(frame->can_id == 640)
+  // {
+  // send_buf[3] = 2;
+  // send_buf[4] = 128;    
   // }
-  // if(frame->can_id == 0x1FF)
-  //   {
-  //   send_buf[4] = 255 ;
-  //   }
-  // memcpy(send_buf + 4, frame->data, 8);
+
+  
   for (int i = 0; i < 8; i++)
   {
     send_buf[i + 5] = frame->data[i];
   }
+  // send_buf[4] = 7;
+  // send_buf[5] = 0x7F;
+  // send_buf[6] = 0xFF;
+  // send_buf[7] = 0x7F;
+  // send_buf[8] = 0xF0;
+  // send_buf[9] = 0x00;
+  // send_buf[10] = 0x00;
+  // send_buf[11] = 0x08;
+  // send_buf[12] = 0x7a;
+      ROS_INFO("can write sock_fd : %d ", sock_fd_);
 
   if (::send(sock_fd_, send_buf, sizeof(send_buf), 0) == -1)  
   ROS_DEBUG_THROTTLE(5., "Unable to write: The %s tx buffer may be full", interface_request_.ifr_name);  

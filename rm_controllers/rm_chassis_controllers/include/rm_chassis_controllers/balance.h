@@ -79,6 +79,7 @@ class BalanceController : public ChassisBase<rm_control::RobotStateInterface,
 public:
   BalanceController() = default;
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) override;
+  void motor_init();
   void imuCallback(const sensor_msgs::Imu::ConstPtr& msg);
 private:
   void moveJoint(const ros::Time& time, const ros::Duration& period) override;
@@ -197,4 +198,5 @@ private:
                                   {117.942493716830 ,-96.9030008525867 ,28.2489221876323 ,-1.76438009000841}};    
 };
 
+  int8_t motor_init_{0};
 }  // namespace rm_chassis_controllers

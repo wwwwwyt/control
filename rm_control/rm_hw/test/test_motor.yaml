@@ -10,7 +10,7 @@ rm_hw:
   actuators:
     mit_joint_motor:
       bus: can0
-      id: 0x203
+      id: 0x204
       type: dm_8009
       lp_cutoff_frequency: 150  
 controllers:
@@ -20,10 +20,10 @@ controllers:
   joint_state_controller:
     type: joint_state_controller/JointStateController
     publish_rate: 100
-  joint_mit_cheetah_position_controller:
-    type: effort_controllers/JointEffortController
-    joint: mit_joint
-    pid: { p: 8, i: 0.0, d: 4.0 }
+  # joint_mit_cheetah_position_controller:
+  #   type: effort_controllers/JointEffortController
+  #   joint: mit_joint
+  #   pid: { p: 8, i: 0.0, d: 4.0 }
   joint_mit_cheetah_vel_controller:
     type: effort_controllers/JointVelocityController
     joint: mit_joint
