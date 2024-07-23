@@ -161,7 +161,7 @@ void SocketTcp::write(can_frame* frame) const
   // send_buf[10] = 0x00;
   // send_buf[11] = 0x08;
   // send_buf[12] = 0x7a;
-      ROS_INFO("can write sock_fd : %d ", sock_fd_);
+      // ROS_INFO("can write sock_fd : %d ", sock_fd_);
 
   if (::send(sock_fd_, send_buf, sizeof(send_buf), 0) == -1)  
   ROS_DEBUG_THROTTLE(5., "Unable to write: The %s tx buffer may be full", interface_request_.ifr_name);  

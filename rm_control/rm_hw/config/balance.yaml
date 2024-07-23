@@ -2,7 +2,7 @@ rm_hw:
   bus:
     - can0
     - can1
-  loop_frequency: 10
+  loop_frequency: 520
   cycle_time_error_threshold: 0.001
   thread_priority: 95
   # Configurations of the actuators
@@ -14,27 +14,27 @@ rm_hw:
       lp_cutoff_frequency: 150  
     left_back_leg_joint_motor:
       bus: can0
-      id: 0x01
+      id: 0x05
       type: dm_8009
       lp_cutoff_frequency: 150
     right_front_leg_joint_motor:
       bus: can0
-      id: 0x03
+      id: 0x07
       type: dm_8009
       lp_cutoff_frequency: 150
     right_back_leg_joint_motor:
       bus: can0
-      id: 0x04
+      id: 0x08
       type: dm_8009
       lp_cutoff_frequency: 150     
     left_wheel_motor:
       bus: can1
-      id: 0x142
+      id: 0x145
       type: lk_9025
       lp_cutoff_frequency: 150       
     right_wheel_motor:
       bus: can1
-      id: 0x141
+      id: 0x142
       type: lk_9025
       lp_cutoff_frequency: 150                  
   # imus:

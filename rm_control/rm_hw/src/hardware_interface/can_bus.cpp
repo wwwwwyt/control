@@ -69,7 +69,7 @@ if(bus_name == "can0")
 void CanBus::write()
 {
   // safety first
-  bool has_write_frame0 = false, has_write_frame1 = false;
+  // bool has_write_frame0 = false, has_write_frame1 = false;
   std::fill(std::begin(rm_frame0_.data), std::end(rm_frame0_.data), 0);
   std::fill(std::begin(rm_frame1_.data), std::end(rm_frame1_.data), 0);
 
@@ -99,7 +99,7 @@ void CanBus::write()
     else if (item.second.type.find("dm") != std::string::npos)
     {
       // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
-      rm_frame0_.can_id = item.first + 0x04;
+      rm_frame0_.can_id = item.first - 0x04;
 
       uint16_t pos_tmp,vel_tmp,kp_tmp{0},kd_tmp{0},tor_tmp;     
       pos_tmp = CanBus::float_to_uint(item.second.cmd_pos,  P_MIN_8009,  P_MAX_8009,  16);
@@ -133,7 +133,7 @@ void CanBus::write()
       }
       else
       {
-        rm_frame0_.data[0] = 0xFF;//ui能帧
+        rm_frame0_.data[0] = 0xFF;//失能帧
         rm_frame0_.data[1] = 0xFF;
         rm_frame0_.data[2] = 0xFF;
         rm_frame0_.data[3] = 0xFF;
@@ -142,14 +142,16 @@ void CanBus::write()
         rm_frame0_.data[6] = 0xFF;
         rm_frame0_.data[7] = 0xFD;            
       }
-        // rm_frame0_.data[0] = 0xFF;//使能帧
-        // rm_frame0_.data[1] = 0xFF;
-        // rm_frame0_.data[2] = 0xFF;
-        // rm_frame0_.data[3] = 0xFF;
-        // rm_frame0_.data[4] = 0xFF;
-        // rm_frame0_.data[5] = 0xFF;
-        // rm_frame0_.data[6] = 0xFF;
-        // rm_frame0_.data[7] = 0xFC;           
+
+      // rm_frame0_.data[0] = 0xFF;//使能帧
+      // rm_frame0_.data[1] = 0xFF;
+      // rm_frame0_.data[2] = 0xFF;
+      // rm_frame0_.data[3] = 0xFF;
+      // rm_frame0_.data[4] = 0xFF;
+      // rm_frame0_.data[5] = 0xFF;
+      // rm_frame0_.data[6] = 0xFF;
+      // rm_frame0_.data[7] = 0xFC;     
+              
       // rm_frame0_.data[0] = 0xFF;//保存零点 （ 在机械拆装腿时 摆到上限位处理零点 vmc拿机械数据－电机角度
       // rm_frame0_.data[1] = 0xFF;
       // rm_frame0_.data[2] = 0xFF;
@@ -160,36 +162,60 @@ void CanBus::write()
       // rm_frame0_.data[7] = 0xFE;    
 
       // rm_frame0_.data[0] = 0xFF;//shi neng
-      // socket_tcp_can0.write(&rm_frame0_);
-      has_write_frame0 = true;
+      socket_tcp_can0.write(&rm_frame0_);
+      // has_write_frame0 = true;
       // std::cout<<"write success !!!"<<std::endl;
-    }    
+    }
     else if (item.second.type.find("lk") != std::string::npos)
     {
       // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
-
+      static uint8_t cnt = 0;
+      static uint8_t cnt_ = 0;
+      
       rm_frame1_.can_id = 0x280;
       int id = item.first - 0x140;
       // uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset)); //期望力矩
-      uint16_t tau = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  16);
-       tau = 0;
+      // uint16_t tau = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  16);
+      uint16_t tau = item.second.cmd_effort/0.00512;
+      // tau = 0;
 
       // TODO(wyt) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
 
       // memcpy(rm_frame1_.data + (item.first- 0x280) * 2, &tau, sizeof(uint16_t));
       if(id == 1)
-       {
-        rm_frame1_.data[0] = *(uint8_t*)(&tau);
-        rm_frame1_.data[1] = *((uint8_t*)(&tau)+1);
-       }
-       if(id == 2)
-       {
-        rm_frame1_.data[2] = *(uint8_t*)(&tau);
-        rm_frame1_.data[3] = *((uint8_t*)(&tau)+1);
-       }
+      {
+              // 设定不同电机的任务频率
+        if (cnt % 2 == 0) // 500hz
+        {
+          // if(tau != 0)
+          //  {
+          //    if(tau)
+          //     tau += 100;
+          //   else
+          //     tau -= 100;
+          //  }
+          rm_frame1_.data[0] = *(uint8_t*)(&tau);
+          rm_frame1_.data[1] = *((uint8_t*)(&tau)+1);
+          socket_tcp_can1.write(&rm_frame1_);
+          cnt = 0;
+        }
+        cnt++;
+      }
+      if(id == 2)
+      {
+              // 设定不同电机的任务频率
+        if (cnt_ % 2 == 0) // 500hz
+        {          
+          rm_frame1_.data[2] = *(uint8_t*)(&tau);
+          rm_frame1_.data[3] = *((uint8_t*)(&tau)+1);
+          socket_tcp_can1.write(&rm_frame1_);
+          cnt_ = 0;
+        }
+        cnt_++;          
+      }
 
-      ROS_INFO("RESULT---  %d ", id);
-      has_write_frame1 = true;
+      // ROS_INFO("RESULT---  %d ", id);
+      // has_write_frame1 = true;
       // socket_tcp_can1.write(&rm_frame1_);
       // std::cout<<"write success !!!"<<std::endl;
       // socket_can_.write(&frame);
@@ -216,18 +242,18 @@ void CanBus::write()
       frame.data[7] = tau & 0xff;
       socket_can_.write(&frame);
     }
-    if (has_write_frame0)
-    {
-      // socket_can_.write(&rm_frame0_);
-      socket_tcp_can0.write(&rm_frame0_);
-    }
-    if (has_write_frame1)
-    {
-      // socket_can_.write(&rm_frame1_);
-      // ROS_INFO("can1 write  waiting..");
-      socket_tcp_can1.write(&rm_frame1_);
-      ROS_INFO("can1 write success..");
-    }
+    // if (has_write_frame0)
+    // {
+    //   // socket_can_.write(&rm_frame0_);
+    //   socket_tcp_can0.write(&rm_frame0_);
+    // }
+    // if (has_write_frame1)
+    // {
+    //   // socket_can_.write(&rm_frame1_);
+    //   // ROS_INFO("can1 write  waiting..");
+    //   socket_tcp_can1.write(&rm_frame1_);
+    //   // ROS_INFO("can1 write success..");
+    // }
   }
 
   // if (has_write_frame0)
@@ -343,10 +369,10 @@ void CanBus::read(ros::Time time)
     //   }
     // }
     // if (data_ptr_.id2act_data_->find(frame.can_id) != data_ptr_.id2act_data_->end()) //dm
-    if(frame.can_id == static_cast<unsigned int>(0x01) || 
-       frame.can_id == static_cast<unsigned int>(0x02) ||
-       frame.can_id == static_cast<unsigned int>(0x03) || 
-       frame.can_id == static_cast<unsigned int>(0x04))
+    if(frame.can_id == static_cast<unsigned int>(0x05) || 
+       frame.can_id == static_cast<unsigned int>(0x06) ||
+       frame.can_id == static_cast<unsigned int>(0x07) || 
+       frame.can_id == static_cast<unsigned int>(0x08))
     {
       // if (data_ptr_.id2act_data_->find(frame.data[0]) != data_ptr_.id2act_data_->end())
       // {
@@ -482,8 +508,8 @@ void CanBus::read(ros::Time time)
 void CanBus::write(can_frame* frame)
 {
   // socket_can_.write(frame);
-  socket_tcp_can0.write(frame);
-  socket_tcp_can1.write(frame);
+  // socket_tcp_can0.write(frame);
+  // socket_tcp_can1.write(frame);
 }
 
 void CanBus::frameCallback(const can_frame& frame)

@@ -51,7 +51,7 @@
                             leg_z_offset="${leg_z_offset}"/>
 
         <xacro:first_leg prefix="left_back" connected_to="base_link"
-                            reflex="1"
+                            reflex="-1"
                             pitch_offset="0"
                             leg_x_offset="${wheel_base/2}"
                             leg_y_offset="${wheel_track/2}"
@@ -77,7 +77,7 @@
                             leg_z_offset="${leg_z_offset}"/>
 
         <xacro:first_leg prefix="right_back" connected_to="base_link"
-                            reflex="1"
+                            reflex="-1"
                             pitch_offset="0"
                             leg_x_offset="${wheel_base/2}"
                             leg_y_offset="${wheel_track/2}"
@@ -92,12 +92,12 @@
         <xacro:mecanum_wheel prefix="left" connected_to="left_front_second_leg"
                              wheel_x_offset="${-wheel_track/2}" wheel_y_offset="${wheel_base/2}"
                              wheel_z_offset="${wheel_offset_z}"
-                             reflect="-1" roller_type="simple"
+                             reflect="1" roller_type="simple"
                              max_effort="5" max_velocity="50"/>
         <xacro:mecanum_wheel prefix="right" connected_to="right_front_second_leg"
                              wheel_x_offset="${-wheel_track/2}" wheel_y_offset="${-wheel_base/2}"
                              wheel_z_offset="${wheel_offset_z}"
-                             reflect="1" roller_type="simple"
+                             reflect="-1" roller_type="simple"
                              max_effort="5" max_velocity="50"/>
         <xacro:wheel_transmission prefix="left" mechanical_reduction="1.0"/>
         <xacro:wheel_transmission prefix="right" mechanical_reduction="-1.0"/>

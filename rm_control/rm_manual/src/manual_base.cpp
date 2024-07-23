@@ -196,8 +196,8 @@ void ManualBase::updatePc(const rm_msgs::DbusData::ConstPtr& dbus_data)
 
 void ManualBase::remoteControlTurnOff()
 {
-  // controller_manager_.stopMainControllers();
-  // controller_manager_.stopCalibrationControllers();
+  controller_manager_.stopMainControllers();
+  controller_manager_.stopCalibrationControllers();
   state_ = PASSIVE;
 }
 
