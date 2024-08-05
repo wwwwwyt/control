@@ -202,7 +202,7 @@ void ChassisBase<T...>::follow(const ros::Time& time, const ros::Duration& perio
   }
   catch (tf2::TransformException& ex)
   {
-    ROS_WARN("%s", ex.what());
+    // ROS_WARN("%s", ex.what());
   }
 }
 
@@ -412,7 +412,7 @@ void ChassisBase<T...>::tfVelToBase(const std::string& from)
   }
   catch (tf2::TransformException& ex)
   {
-    ROS_WARN("%s", ex.what());
+    // ROS_WARN("%s", ex.what());
   }
 }
 

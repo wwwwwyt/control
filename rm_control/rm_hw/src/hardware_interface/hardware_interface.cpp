@@ -135,8 +135,8 @@ void RmRobotHW::read(const ros::Time& time, const ros::Duration& period)
       if (act_data.second.halted)
       {
         act_data.second.seq = 0;
-        act_data.second.vel = 0;
-        act_data.second.effort = 0;
+        // act_data.second.vel = 0;
+        // act_data.second.effort = 0;
         act_data.second.calibrated = false;  // set the actuator no calibrated
       }
     }

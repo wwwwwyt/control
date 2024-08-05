@@ -11,6 +11,7 @@
 #include <rm_msgs/BalanceState.h>
 // #include <rm_common/VMC_calc.h>
 #include <rm_common/ori_tool.h>
+#include <rm_common/dm_tool.h>
 
 #include <tf/transform_listener.h>
 #include <sensor_msgs/Imu.h>
@@ -46,7 +47,8 @@ namespace rm_chassis_controllers
 	float phi1,phi4;
 	
 	float j11,j12,j21,j22;//笛卡尔空间力到关节空间的力的雅可比矩阵系数
-	float torque_set[2];
+	// float torque_set[2];
+  float T_back, T_front;
 
 	float F0;//F0为五连杆机构末端沿腿的推力 
 	float Tp;
@@ -88,6 +90,8 @@ private:
   void balanceR_control_loop(chassis_t *chassis,vmc_leg_t *vmcr,INS_t *ins,float *LQR_K,const ros::Duration& period);
   void normal(const ros::Time& time, const ros::Duration& period);
   void block(const ros::Time& time, const ros::Duration& period);
+  void xvEstimateKF_Init(KalmanFilter_t *EstimateKF);
+  void observe(const ros::Time& time, const ros::Duration& period);
   geometry_msgs::Twist odometry() override;
   void mySaturate(float *in,float min,float max);
 
@@ -105,7 +109,8 @@ private:
 #define LEG_PID_MAX_OUT  90.0f //90牛
 #define LEG_PID_MAX_IOUT 0.0f
 
-
+#define VEL_PROCESS_NOISE 10  // 速度过程噪声
+#define VEL_MEASURE_NOISE 2000 // 速度测量噪声
 
  void VMC_init(vmc_leg_t *vmc,double l1, double l2, double l3, double l4, double l5);//给杆长赋值
 
@@ -165,10 +170,11 @@ private:
   control_toolbox::Pid pid_r_;
   control_toolbox::Pid Tp_Pid;//防劈叉补偿pd
   control_toolbox::Pid Turn_Pid;//转向pd
-
+  control_toolbox::Pid Roll_Pid;
   chassis_t chassis_move;
 
   INS_t ins;
+  int imu_dis_time{0}; //imu稳定时间 刚上电数据不稳定
   float LQR_K[12]={ 
    -2.1954,   -0.2044  , -0.8826,   -1.3245,    1.2784  ,  0.1112,
     2.5538,   0.2718  ,  1.5728  ,  2.2893  , 12.1973 ,   0.4578};
@@ -200,4 +206,15 @@ private:
 };
 
   int8_t motor_init_{0};
+  int8_t Kalman_init{0};
+  static float wr,wl=0.0f;
+	static float vrb,vlb=0.0f;
+	static float aver_v=0.0f;
+  
+													 
+const float vaEstimateKF_H[4] = {1.0f, 0.0f,
+                                 0.0f, 1.0f};	// 设置矩阵H为常量
+
+  float ins_dt = 0.01f; //imu频率 成品100hz
+  float gravity[3] = {0, 0, 9.81f};
 }  // namespace rm_chassis_controllers

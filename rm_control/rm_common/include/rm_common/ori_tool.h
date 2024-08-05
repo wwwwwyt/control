@@ -60,9 +60,10 @@ typedef struct
 
     float Gyro[3];  // 角速度
     float Accel[3]; // 加速度
-    float MotionAccel_b[3]; // 机体坐标加速度
+    float MotionAccel_b[3]; // 机体坐标加速度   
     float MotionAccel_n[3]; // 绝对系加速度
-
+    float MotionAccel_n_last[3]; //上一次 绝对系加速度
+   
     float AccelLPF; // 加速度低通滤波系数
 
     // 加速度在绝对系的向量表示

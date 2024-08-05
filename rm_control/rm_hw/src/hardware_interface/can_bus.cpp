@@ -101,16 +101,18 @@ void CanBus::write()
       // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
       rm_frame0_.can_id = item.first - 0x04;
 
-      uint16_t pos_tmp,vel_tmp,kp_tmp{0},kd_tmp{0},tor_tmp;     
-      pos_tmp = CanBus::float_to_uint(item.second.cmd_pos,  P_MIN_8009,  P_MAX_8009,  16);
-      vel_tmp = CanBus::float_to_uint(item.second.cmd_vel,  V_MIN_8009,  V_MAX_8009,  12);
-      // kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12); 
-      // kd_tmp  = float_to_uint(kd,   KD_MIN, KD_MAX, 12);
-      tor_tmp = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  12);
-
       // TODO(wyt) add position vel and effort hardware interface for DM Motor, now we using it as an effort joint.
       if(item.second.cmd_effort <= 20 && item.second.cmd_effort >= -20)
       {
+
+        uint16_t pos_tmp,vel_tmp,kp_tmp{0},kd_tmp{0},tor_tmp;     
+        pos_tmp = CanBus::float_to_uint(item.second.cmd_pos,  P_MIN_8009,  P_MAX_8009,  16);
+        vel_tmp = CanBus::float_to_uint(item.second.cmd_vel,  V_MIN_8009,  V_MAX_8009,  12);
+        // kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12); 
+        // kd_tmp  = float_to_uint(kd,   KD_MIN, KD_MAX, 12);
+        item.second.cmd_effort *= 1.25;
+        tor_tmp = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  12);
+
         rm_frame0_.data[0] = pos_tmp >> 8;
         rm_frame0_.data[1] = pos_tmp;
         rm_frame0_.data[2] = vel_tmp >> 4;
@@ -422,7 +424,7 @@ void CanBus::read(ros::Time time)
           act_data.pos = (uint16_t)((frame.data[7] << 8) | frame.data[6]);
           act_data.angle_single_round = ECD_ANGLE_COEF_LK * act_data.pos;
           act_data.vel = (1 - SPEED_SMOOTH_COEF) * act_data.vel +
-                                DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));          
+                                DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));        
           act_data.effort = (1 - CURRENT_SMOOTH_COEF) * act_data.effort +
                                   CURRENT_SMOOTH_COEF * (float)((int16_t)(frame.data[3] << 8 | frame.data[2]));
           act_data.temp = frame.data[1];
@@ -438,8 +440,10 @@ void CanBus::read(ros::Time time)
         catch (std::runtime_error& ex)
         {
         }
-          continue;
+         
         }
+        act_data.vel = 1;
+        continue;
       // }
     }           
     else if((CAN_PACKET_ID)frame.can_id>>8  == CAN_PACKET_STATUS)

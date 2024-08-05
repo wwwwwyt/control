@@ -215,9 +215,11 @@ protected:
     Wheel_Motor_t wheel_motor[2];
     
     float v_set;//期望速度，单位是m/s
+    float vel_predict; //预测速度
+    float vel_cov{100}; //速度方差初始化
     float x_set;//期望位置，单位是m
     float turn_set;//期望yaw轴弧度
-    float leg_set{0.16};//期望腿长，单位是m
+    float leg_set{0.20};//期望腿长，单位是m
     float last_leg_set;
 
     float v_filter;//滤波后的车体速度，单位是m/s
@@ -234,6 +236,7 @@ protected:
     float theta_err;//两腿夹角误差
       
     float turn_T;//yaw轴补偿
+    float roll_lenth;//yaw轴补偿
     float leg_tp;//防劈叉补偿
     
     uint8_t start_flag;//启动标志
