@@ -178,7 +178,7 @@ void CanBus::write()
       int id = item.first - 0x140;
       // uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset)); //期望力矩
       // uint16_t tau = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  16);
-      uint16_t tau = item.second.cmd_effort/0.00512;
+      uint16_t tau = item.second.cmd_effort * 195.3125f;
       // tau = 0;
 
       // TODO(wyt) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
