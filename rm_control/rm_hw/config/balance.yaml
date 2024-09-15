@@ -31,12 +31,12 @@ rm_hw:
       bus: can1
       id: 0x141
       type: lk_9025
-      lp_cutoff_frequency: 150       
+      # lp_cutoff_frequency: 150       
     right_wheel_motor:
       bus: can1
       id: 0x142
       type: lk_9025
-      lp_cutoff_frequency: 150                  
+      # lp_cutoff_frequency: 150                  
   # imus:
   #   base_imu:
   #     frame_id: base_imu

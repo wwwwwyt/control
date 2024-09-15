@@ -112,8 +112,8 @@ void VMC_calc_2( vmc_leg_t& vmc)  // 计算期望的关节输出力矩
   float phi03 = vmc.phi0 - vmc.phi3;
   float phi02 = vmc.phi0 - vmc.phi2;
   // float F_m_L = vmc.F0 * vmc.L0;
-  // vmc.T_front = (vmc.l1  * sin(phi12) * (F_m_L * sin(phi53) + vmc.Tp * cos(phi53))) / (vmc.L0 * sin(phi32));
-  // vmc.T_back = (vmc.l4  * sin(phi34) * (F_m_L * sin(phi52) + vmc.Tp * cos(phi52))) / (vmc.L0 * sin(phi32));
+  // vmc.T_front = (vmc.l1  * sin(phi12) * (F_m_L * sin(phi03) + vmc.Tp * cos(phi03))) / (vmc.L0 * sin(phi32));
+  // vmc.T_back = (vmc.l4  * sin(phi34) * (F_m_L * sin(phi02) + vmc.Tp * cos(phi02))) / (vmc.L0 * sin(phi32));
 
   vmc.j11 = (vmc.l1 * sin(phi03) * sin(phi12)) / sin(phi32);
   vmc.j12 =
@@ -124,8 +124,8 @@ void VMC_calc_2( vmc_leg_t& vmc)  // 计算期望的关节输出力矩
 
 
   vmc.T_front =
-      vmc.j11 * vmc.F0 + vmc.j12 * vmc.Tp;  // 得到RightFront的输出轴期望力矩，F0为五连杆机构末端沿腿的推力
-  vmc.T_back = vmc.j21 * vmc.F0 + vmc.j22 * vmc.Tp;  // 得到RightBack的输出轴期望力矩，Tp为沿中心轴的力矩
+      vmc.j11 * vmc.F0 + vmc.j12 * vmc.Tp;  // 角一  得到RightFront的输出轴期望力矩，F0为五连杆机构末端沿腿的推力   
+  vmc.T_back = vmc.j21 * vmc.F0 + vmc.j22 * vmc.Tp;  //角四  得到RightBack的输出轴期望力矩，Tp为沿中心轴的力矩
 
   // ROS_INFO("test %f" , vmc.j11);
   // ROS_INFO("j12_  : j11: %f | j12: %f | j21: %f  | yy: %f ", vmc.l1 ,vmc.phi0 , vmc.phi3 ,cos(vmc.phi0-vmc.phi3)
@@ -172,7 +172,10 @@ void VMC_calc_1(vmc_leg_t& vmc, INS_t* ins,
 
   vmc.theta = 3.1415926 / 2.0f - vmc.Pitch - vmc.phi0;  // 得到状态变量1
   vmc.d_theta = (-vmc.PithGyro - vmc.d_phi0);    // 得到状态变量2
-
+// if(vmc.last_phi0 == vmc.phi0)
+// {
+//   vmc.d_theta = vmc.last_d_theta;
+// }
   vmc.last_phi0 = vmc.phi0;
 
   vmc.d_L0 = (vmc.L0 - vmc.last_L0) / dt;       // 腿长L0的一阶导数

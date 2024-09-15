@@ -1,5 +1,5 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:property name="max_effort" value="12"/>
+    <xacro:property name="max_effort" value="40"/>
     <xacro:property name="max_velocity" value="20.9333"/>
     <xacro:property name="leg_upper_limit" value="1.728"/>
     <xacro:property name="leg_lower_limit" value="0.05"/>

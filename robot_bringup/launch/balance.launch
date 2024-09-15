@@ -7,7 +7,8 @@
     <rosparam file="$(find rm_config)/config/rm_controllers/balance.yaml"/>
 
     <node name="rm_dbus" pkg="rm_dbus" type="rm_dbus" respawn="false"/>
-
+    <include file="$(find rm_config)/launch/ahrs_data.launch"/> 
+    
     <include file="$(find rm_config)/launch/rm_hw.launch"/>
 
     <!-- <include file="$(find rm_config)/launch/vision/camera.launch">

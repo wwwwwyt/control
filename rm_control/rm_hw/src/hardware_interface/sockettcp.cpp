@@ -141,11 +141,11 @@ void SocketTcp::write(can_frame* frame) const
   send_buf[2] = 0;
   send_buf[3] = frame->can_id >> 8;
   send_buf[4] = frame->can_id;
-  // if(frame->can_id == 640)
-  // {
-  // send_buf[3] = 2;
-  // send_buf[4] = 128;    
-  // }
+  if(frame->can_id == 280)
+  {
+  send_buf[3] = 2;
+  send_buf[4] = 128;    
+  }
 
   
   for (int i = 0; i < 8; i++)

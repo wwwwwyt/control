@@ -110,7 +110,7 @@ void CanBus::write()
         vel_tmp = CanBus::float_to_uint(item.second.cmd_vel,  V_MIN_8009,  V_MAX_8009,  12);
         // kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12); 
         // kd_tmp  = float_to_uint(kd,   KD_MIN, KD_MAX, 12);
-        item.second.cmd_effort *= 1.25;
+        // item.second.cmd_effort *= 1.25;
         tor_tmp = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  12);
 
         rm_frame0_.data[0] = pos_tmp >> 8;
@@ -163,59 +163,98 @@ void CanBus::write()
       // rm_frame0_.data[6] = 0xFF;
       // rm_frame0_.data[7] = 0xFE;    
 
-      // rm_frame0_.data[0] = 0xFF;//shi neng
+        // rm_frame0_.data[0] = 0xFF;//失能帧
+        // rm_frame0_.data[1] = 0xFF;
+        // rm_frame0_.data[2] = 0xFF;
+        // rm_frame0_.data[3] = 0xFF;
+        // rm_frame0_.data[4] = 0xFF;
+        // rm_frame0_.data[5] = 0xFF;
+        // rm_frame0_.data[6] = 0xFF;
+        // rm_frame0_.data[7] = 0xFD;    
       socket_tcp_can0.write(&rm_frame0_);
       // has_write_frame0 = true;
       // std::cout<<"write success !!!"<<std::endl;
     }
     else if (item.second.type.find("lk") != std::string::npos)
     {
-      // const ActCoeff& act_coeff = data_ptr_.type2act_coeffs_->find(item.second.type)->second;
-      static uint8_t cnt = 0;
-      static uint8_t cnt_ = 0;
+// //单电机
+//       rm_frame1_.can_id = item.first;
+//       uint16_t tau = item.second.cmd_effort * 195.3125f;
+//  tau = 0;
+//       rm_frame1_.data[0] = 0xA1;
+//       rm_frame1_.data[1] = 0xA0;
+//       rm_frame1_.data[2] = 0xA0;   
+//       rm_frame1_.data[3] = 0xA0;           
+//       rm_frame1_.data[4] = *(uint8_t*)(&tau);
+//       rm_frame1_.data[5] = *((uint8_t*)(&tau)+1);
+//       rm_frame1_.data[6] = 0xA0;   
+//       rm_frame1_.data[7] = 0xA0;    
+//       socket_tcp_can1.write(&rm_frame1_);                
+      
+
+//多电机
+//       static uint8_t cnt = 0;
+//       static uint8_t cnt_ = 0;
       
       rm_frame1_.can_id = 0x280;
       int id = item.first - 0x140;
-      // uint16_t tau = static_cast<int>(act_coeff.effort2act * (item.second.exe_effort - act_coeff.act2effort_offset)); //期望力矩
-      // uint16_t tau = CanBus::float_to_uint(item.second.cmd_effort, T_MIN_8009,  T_MAX_8009,  16);
+
       uint16_t tau = item.second.cmd_effort * 195.3125f;
+
+//       // ROS_INFO("tau %d" , tau);
       // tau = 0;
 
-      // TODO(wyt) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
+//       // TODO(wyt) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
+//       if(id == 1)
+//       {
+//         rm_frame1_.data[0] = *(uint8_t*)(&tau);
+//         rm_frame1_.data[1] = *((uint8_t*)(&tau)+1);
+//               // 设定不同电机的任务频率
+//         if (cnt % 2 == 0) // 500hz
+//         {
+//           // if(tau != 0)
+//           //  {
+//           //    if(tau)
+//           //     tau += 100;
+//           //   else
+//           //     tau -= 100;
+//           //  }
 
-      // memcpy(rm_frame1_.data + (item.first- 0x280) * 2, &tau, sizeof(uint16_t));
+//           socket_tcp_can1.write(&rm_frame1_);
+//           cnt = 0;
+//         }
+//         cnt++;
+//       }
+//       if(id == 2)
+//       {
+//         rm_frame1_.data[2] = *(uint8_t*)(&tau);
+//         rm_frame1_.data[3] = *((uint8_t*)(&tau)+1);        
+//               // 设定不同电机的任务频率
+//         if (cnt_ % 2 == 0) // 500hz
+//         {          
+
+//           socket_tcp_can1.write(&rm_frame1_);
+//           cnt_ = 0;
+//         }
+//         cnt_++;          
+//       }
+
+      // TODO(wyt) add position vel and effort hardware interface for MIT Cheetah Motor, now we using it as an effort joint.
       if(id == 1)
       {
-              // 设定不同电机的任务频率
-        if (cnt % 2 == 0) // 500hz
-        {
-          // if(tau != 0)
-          //  {
-          //    if(tau)
-          //     tau += 100;
-          //   else
-          //     tau -= 100;
-          //  }
-          rm_frame1_.data[0] = *(uint8_t*)(&tau);
-          rm_frame1_.data[1] = *((uint8_t*)(&tau)+1);
-          socket_tcp_can1.write(&rm_frame1_);
-          cnt = 0;
-        }
-        cnt++;
+        lk_date_l = tau;
       }
       if(id == 2)
       {
-              // 设定不同电机的任务频率
-        if (cnt_ % 2 == 0) // 500hz
-        {          
-          rm_frame1_.data[2] = *(uint8_t*)(&tau);
-          rm_frame1_.data[3] = *((uint8_t*)(&tau)+1);
-          socket_tcp_can1.write(&rm_frame1_);
-          cnt_ = 0;
-        }
-        cnt_++;          
+        lk_date_r = tau;  
+        rm_frame1_.data[0] = *(uint8_t*)(&lk_date_l);
+        rm_frame1_.data[1] = *((uint8_t*)(&lk_date_l)+1);   
+        rm_frame1_.data[2] = *(uint8_t*)(&tau);
+        rm_frame1_.data[3] = *((uint8_t*)(&tau)+1); 
+        // ROS_INFO("debug debug %d", lk_date_l);
+        // ROS_INFO("debug debug %d", tau);
+                  socket_tcp_can1.write(&rm_frame1_);                
       }
-
       // ROS_INFO("RESULT---  %d ", id);
       // has_write_frame1 = true;
       // socket_tcp_can1.write(&rm_frame1_);
@@ -423,8 +462,7 @@ void CanBus::read(ros::Time time)
           act_data.q_last = act_data.pos;
           act_data.pos = (uint16_t)((frame.data[7] << 8) | frame.data[6]);
           act_data.angle_single_round = ECD_ANGLE_COEF_LK * act_data.pos;
-          act_data.vel = (1 - SPEED_SMOOTH_COEF) * act_data.vel +
-                                DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));        
+
           act_data.effort = (1 - CURRENT_SMOOTH_COEF) * act_data.effort +
                                   CURRENT_SMOOTH_COEF * (float)((int16_t)(frame.data[3] << 8 | frame.data[2]));
           act_data.temp = frame.data[1];
@@ -442,7 +480,8 @@ void CanBus::read(ros::Time time)
         }
          
         }
-        act_data.vel = 1;
+                 act_data.vel = (1 - SPEED_SMOOTH_COEF) * act_data.vel +
+                                DEGREE_2_RAD * SPEED_SMOOTH_COEF * (float)((int16_t)(frame.data[5] << 8 | frame.data[4]));        
         continue;
       // }
     }           
