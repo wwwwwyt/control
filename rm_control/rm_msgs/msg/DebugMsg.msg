@@ -1,3 +1,6 @@
+float32 observe_x
+float32 observe_v
+float32 acc_n
 #l
 float64 l_theta
 float64 l_dtheta
@@ -7,5 +10,6 @@ float32 l_4
 #r
 float64 r_theta
 float64 r_dtheta
+float32 r_dphi0
 float32 r_1
 float32 r_4
