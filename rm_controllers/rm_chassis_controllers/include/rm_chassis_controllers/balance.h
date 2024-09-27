@@ -30,8 +30,11 @@ class BalanceController : public ChassisBase<rm_control::RobotStateInterface, ha
 {
   enum BalanceMode
   {
-    NORMAL,
-    BLOCK
+    CHASSIS_ZERO_FORCE = 0,    // 电流零输入
+    CHASSIS_ROTATE,            // 小陀螺模式
+    CHASSIS_FOLLOW_GIMBAL_YAW, // 跟随模式，底盘叠加角度环控制
+    CHASSIS_RESET,             // 底盘重置,双腿缩回
+    CHASSIS_FREE_DEBUG,        // 底盘单独调试模式
   };
 
 public:
@@ -39,13 +42,17 @@ public:
   bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) override;
   void motor_init();
   void motor_send();
+  void motor_disability();
   void imuCallback(const sensor_msgs::Imu::ConstPtr& msg);
 
 private:
   void moveJoint(const ros::Time& time, const ros::Duration& period) override;
   void balance_init(const ros::Duration& period);
-  void balanceL_control_loop(chassis_t* chassis, vmc_leg_t* vmcl, INS_t* ins, float* LQR_K, const ros::Duration& period);
-  void balanceR_control_loop(chassis_t* chassis, vmc_leg_t* vmcr, INS_t* ins, float* LQR_K, const ros::Duration& period);
+  void CalcLQR(vmc_leg_t* vmc_);
+  void SynthesizeMotion(const ros::Duration& period_);
+  void LegControl(const ros::Duration& period_);
+  // void balanceL_control_loop(chassis_t* chassis, vmc_leg_t* vmcl, INS_t* ins, float* LQR_K, const ros::Duration& period);
+  // void balanceR_control_loop(chassis_t* chassis, vmc_leg_t* vmcr, INS_t* ins, float* LQR_K, const ros::Duration& period);
   void normal(const ros::Time& time, const ros::Duration& period);
   void block(const ros::Time& time, const ros::Duration& period);
   void xvEstimateKF_Init(KalmanFilter_t* EstimateKF);
@@ -117,8 +124,8 @@ private:
 
   // -17.7124 ,  -1.4103  , -6.1910 ,  -5.7739  , 30.5238   , 2.6958,
   //  39.6862 ,   4.8717  , 32.1032 ,  27.7339  , 77.5212  ,  1.8705
-  -24.0894,   -2.3276 , -10.2951,   -8.9418,   30.7120,    2.6833,
-   61.9292 ,   8.8109  , 54.8835 ,  43.7634 ,  75.9268,    1.5596
+  -24.9050,   -2.4744,  -11.1766,   -9.6310,   31.3504,    2.7359,
+   69.0336 ,  10.0087,   64.0208,   50.2696,   72.1825,    1.1649
    };
 
   // float Poly_Coefficient[12][4]={	{-88.3079710751263,	68.9068310796955,	-30.0003802287502,	-0.197774178106864},
@@ -147,7 +154,7 @@ private:
                                     {60.8507467484317,	-83.3961534492839,	39.9101581380469,	-0.796892771247721} };
 };
 
-int8_t motor_init_{ 0 };
+int8_t motor_init_{ 1 };
 int8_t Kalman_init{ 0 };
 static float wr, wl = 0.0f;
 static float vrb, vlb = 0.0f;

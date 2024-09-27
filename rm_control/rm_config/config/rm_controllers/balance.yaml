@@ -66,8 +66,8 @@ controllers:
     l5: 0.15
     # pid_l: { p: 10, i: 0, d: 0.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
     # pid_r: { p: 10, i: 0, d: 0.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
-    pid_l: { p: 1300, i: 0, d: 200.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
-    pid_r: { p: 1300, i: 0, d: 200.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
+    pid_l: { p: 1300, i: 0, d: 300.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
+    pid_r: { p: 1300, i: 0, d: 300.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
 
     # pid_l: { p: 450, i: 0, d: 40.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }
     # pid_r: { p: 450, i: 0, d: 40.0, i_max: 0.0, i_min: 0.0, antiwindup: true, publish_state: true }    

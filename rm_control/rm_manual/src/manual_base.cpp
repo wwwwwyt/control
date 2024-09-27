@@ -128,26 +128,26 @@ void ManualBase::dbusDataCallback(const rm_msgs::DbusData::ConstPtr& data)
 
     if (state_ == RC)
     {
-      if(contoll_set)
-      {
-        controller_manager_.startStateControllers();
-        controller_manager_.startMainControllers();
-        contoll_set -= 1;
-      }
+      // if(contoll_set)
+      // {
+      //   controller_manager_.startStateControllers();
+      //   controller_manager_.startMainControllers();
+      //   contoll_set -= 1;
+      // }
       updateRc(data);
     
     }
     else if (state_ == PC)
       updatePc(data);
-    else
-    { 
-      if(!contoll_set)
-      {
-        controller_manager_.stopMainControllers();
-        controller_manager_.stopCalibrationControllers();
-        contoll_set += 1;
-      }
-    }
+    // else
+    // { 
+      // if(!contoll_set)
+      // {
+      //   controller_manager_.stopMainControllers();
+      //   controller_manager_.stopCalibrationControllers();
+      //   contoll_set += 1;
+      // }
+    // }
   }
   else
   {
@@ -203,8 +203,8 @@ void ManualBase::remoteControlTurnOff()
 
 void ManualBase::remoteControlTurnOn()
 {
-  // controller_manager_.startStateControllers();
-  // controller_manager_.startMainControllers();
+  controller_manager_.startStateControllers();
+  controller_manager_.startMainControllers();
   state_ = IDLE;
 }
 
